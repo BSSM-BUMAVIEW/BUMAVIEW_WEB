@@ -26,7 +26,7 @@ export function Header({ activeSection, onNavigate, isLoggedIn, onLogin, onLogou
   
   const navItems = [
     { id: 'dashboard', label: '대시보드', icon: Crown, href: '/dashboard' },
-    { id: 'battle', label: '체스 듀얼', icon: Users, href: '/battle' },
+    { id: 'battle', label: '면접 배틀', icon: Users, href: '/battle' },
     { id: 'search', label: '전략 탐색', icon: Search, href: '/search' },
     { id: 'rankings', label: '마스터 랭킹', icon: Trophy, href: '/rankings' },
     { id: 'mock', label: '단독 훈련', icon: Target, href: '/mock' },
@@ -40,8 +40,8 @@ export function Header({ activeSection, onNavigate, isLoggedIn, onLogin, onLogou
             <Crown size={28} color="white" />
           </LogoIcon>
           <LogoText>
-            <h1>체스 아카데미</h1>
-            <p>Chess Master Academy</p>
+            <h1>부마뷰</h1>
+            <p>Bumaview</p>
           </LogoText>
         </LogoSection>
 

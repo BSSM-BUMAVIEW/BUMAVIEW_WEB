@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "체스 아카데미 - Chess Academy",
-  description: "체스 학습과 연습을 위한 종합 플랫폼",
+  title: "부마뷰",
+  description: "면접 학습과 경쟁을 위한 종합 플랫폼",
 };
 
 export default function RootLayout({
