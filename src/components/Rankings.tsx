@@ -27,7 +27,7 @@ export function Rankings() {
   const answerRankings = [
     {
       rank: 1,
-      name: "김개발",
+      name: "서정현",
       avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=1",
       totalLikes: 1247,
       totalAnswers: 89,
@@ -38,7 +38,7 @@ export function Rankings() {
     },
     {
       rank: 2,
-      name: "박프론트",
+      name: "박동현",
       avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=2",
       totalLikes: 986,
       totalAnswers: 67,
@@ -49,7 +49,7 @@ export function Rankings() {
     },
     {
       rank: 3,
-      name: "이디비",
+      name: "김한결",
       avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=3",
       totalLikes: 834,
       totalAnswers: 52,
@@ -60,7 +60,7 @@ export function Rankings() {
     },
     {
       rank: 4,
-      name: "최백엔드",
+      name: "권민재",
       avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=4",
       totalLikes: 756,
       totalAnswers: 48,
@@ -71,7 +71,7 @@ export function Rankings() {
     },
     {
       rank: 5,
-      name: "정타입",
+      name: "허세진",
       avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=5",
       totalLikes: 689,
       totalAnswers: 43,
@@ -85,7 +85,7 @@ export function Rankings() {
   const battleRankings = [
     {
       rank: 1,
-      name: "배틀킹",
+      name: "서정현",
       avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=6",
       rating: 2187,
       wins: 47,
@@ -96,7 +96,7 @@ export function Rankings() {
     },
     {
       rank: 2,
-      name: "면접마스터",
+      name: "박동현",
       avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=7",
       rating: 1943,
       wins: 39,
@@ -107,7 +107,7 @@ export function Rankings() {
     },
     {
       rank: 3,
-      name: "승부사",
+      name: "오주현",
       avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=8",
       rating: 1756,
       wins: 34,
@@ -118,7 +118,7 @@ export function Rankings() {
     },
     {
       rank: 4,
-      name: "도전자",
+      name: "김현우",
       avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=9",
       rating: 1624,
       wins: 28,
@@ -129,7 +129,7 @@ export function Rankings() {
     },
     {
       rank: 5,
-      name: "신입생",
+      name: "공덕현",
       avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=10",
       rating: 1487,
       wins: 23,
@@ -164,19 +164,6 @@ export function Rankings() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-6xl mx-auto">
-        {/* Grand Master Hall */}
-        <div className="mb-8 text-center">
-          <div className="flex items-center justify-center space-x-4 mb-4">
-            <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center shadow-lg">
-              <span className="text-white text-2xl">♔</span>
-            </div>
-            <h1 className="text-4xl font-bold text-slate-800">명예의 전당</h1>
-            <div className="w-16 h-16 bg-gradient-to-br from-slate-500 to-slate-700 rounded-full flex items-center justify-center shadow-lg">
-              <span className="text-white text-2xl">♚</span>
-            </div>
-          </div>
-          <p className="text-slate-600 text-lg">체스 마스터들의 영광스러운 순위</p>
-        </div>
 
         {/* Tournament Period */}
         <div className="flex justify-center mb-8">
@@ -206,14 +193,14 @@ export function Rankings() {
               className="flex items-center space-x-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-purple-600 data-[state=active]:text-white text-slate-600"
             >
               <span>♛</span>
-              <span>지식 명인</span>
+              <span>면접 답변 랭킹</span>
             </TabsTrigger>
             <TabsTrigger 
               value="battles" 
               className="flex items-center space-x-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-purple-600 data-[state=active]:text-white text-slate-600"
             >
               <span>♞</span>
-              <span>배틀 마스터</span>
+              <span>면접 체스 랭킹</span>
             </TabsTrigger>
           </TabsList>
 
