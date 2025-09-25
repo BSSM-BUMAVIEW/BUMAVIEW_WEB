@@ -18,6 +18,7 @@ import {
   ChessPiece,
   AnimatedBorder
 } from '../styled/HeroSection.styled';
+import { APP_TEXTS } from '../../constants/texts';
 
 export const HeroSection: React.FC = () => {
   return (
@@ -33,26 +34,25 @@ export const HeroSection: React.FC = () => {
             <span style={{ color: 'white', fontSize: '20px' }}>♔</span>
           </TitleIcon>
           <TitleText>
-            체스 마스터 면접전
+            {APP_TEXTS.dashboard.hero.title}
           </TitleText>
         </TitleSection>
         
         <Description>
-          전략적 사고로 면접을 정복하세요. <br />
-          매 수마다 신중하게, 승리를 위해 계획하세요.
+          {APP_TEXTS.dashboard.hero.subtitle}
         </Description>
         
         <ButtonGroup>
           <Link href="/battle">
             <PrimaryButton size="lg">
               <span style={{ marginRight: '8px' }}>♞</span>
-              배틀 시작
+              {APP_TEXTS.dashboard.hero.startButton}
             </PrimaryButton>
           </Link>
           <Link href="/mock">
             <SecondaryButton size="lg">
               <span style={{ marginRight: '8px' }}>♗</span>
-              단독 훈련
+              {APP_TEXTS.dashboard.actions.soloTraining.title}
             </SecondaryButton>
           </Link>
         </ButtonGroup>

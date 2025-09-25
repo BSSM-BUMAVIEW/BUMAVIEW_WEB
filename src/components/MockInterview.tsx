@@ -284,7 +284,7 @@ export function MockInterview() {
                   <span className="text-3xl animate-bounce">🏆</span>
                   <div>
                     <h3 className="text-xl font-bold text-slate-800">업적 달성!</h3>
-                    <p className="text-blue-600">"전략적 마스터" - {questionCount}문제 훈련을 성공적으로 완주했습니다</p>
+                    <p className="text-blue-600">&quot;전략적 마스터&quot; - {questionCount}문제 훈련을 성공적으로 완주했습니다</p>
                   </div>
                   <span className="text-3xl animate-bounce delay-200">⭐</span>
                 </div>

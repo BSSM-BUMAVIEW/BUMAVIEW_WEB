@@ -1,6 +1,6 @@
 import React from 'react';
-import { InterviewBattle } from '../../../components/InterviewBattle';
+import { InterviewBattleNew } from '../../../components/InterviewBattleNew';
 
 export default function BattlePage() {
-  return <InterviewBattle />;
+  return <InterviewBattleNew />;
 }

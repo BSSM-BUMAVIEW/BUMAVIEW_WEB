@@ -532,7 +532,7 @@ export function InterviewBattle() {
                         업적 달성!
                       </h3>
                       <p className="text-blue-600">
-                        "전략적 승리" - 논리적 답변으로 승리를
+                        &quot;전략적 승리&quot; - 논리적 답변으로 승리를
                         달성했습니다
                       </p>
                     </div>

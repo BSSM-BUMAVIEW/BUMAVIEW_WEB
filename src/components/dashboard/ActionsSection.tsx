@@ -3,6 +3,8 @@ import { Card, CardContent } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { ChevronRight, Zap } from 'lucide-react';
 import Link from 'next/link';
+import { APP_TEXTS } from '../../constants/texts';
+import type { AppSection } from '../../types';
 
 interface Action {
   title: string;
@@ -16,23 +18,64 @@ interface Action {
 }
 
 interface ActionsSectionProps {
-  actions: Action[];
+  onNavigate: (section: AppSection)=>void;
 }
 
-export const ActionsSection: React.FC<ActionsSectionProps> = ({ actions }) => {
+export const ActionsSection: React.FC<ActionsSectionProps> = ({ onNavigate }) => {
+  const quickActions = [
+    {
+      title: APP_TEXTS.dashboard.actions.chessDuel.title,
+      description: APP_TEXTS.dashboard.actions.chessDuel.description,
+      piece: '♞',
+      pieceName: APP_TEXTS.dashboard.actions.chessDuel.pieceName,
+      color: 'from-red-500 to-red-700',
+      action: () => onNavigate('battle'),
+      href: '/battle',
+      position: 'a1',
+      highlight: true
+    },
+    {
+      title: APP_TEXTS.dashboard.actions.knowledgeExploration.title,
+      description: APP_TEXTS.dashboard.actions.knowledgeExploration.description,
+      piece: '♗',
+      pieceName: APP_TEXTS.dashboard.actions.knowledgeExploration.pieceName,
+      color: 'from-blue-500 to-blue-700',
+      action: () => onNavigate('search'),
+      href: '/search',
+      position: 'b8'
+    },
+    {
+      title: APP_TEXTS.dashboard.actions.soloTraining.title,
+      description: APP_TEXTS.dashboard.actions.soloTraining.description,
+      piece: '♖',
+      pieceName: APP_TEXTS.dashboard.actions.soloTraining.pieceName,
+      color: 'from-emerald-500 to-emerald-700',
+      action: () => onNavigate('mock'),
+      href: '/mock',
+      position: 'h1'
+    },
+    {
+      title: APP_TEXTS.dashboard.actions.hallOfFame.title,
+      description: APP_TEXTS.dashboard.actions.hallOfFame.description,
+      piece: '♕',
+      pieceName: APP_TEXTS.dashboard.actions.hallOfFame.pieceName,
+      color: 'from-amber-500 to-amber-700',
+      action: () => onNavigate('rankings'),
+      href: '/rankings',
+      position: 'd8'
+    }
+  ];
   return (
     <section>
       <h2 className="text-2xl font-bold text-slate-800 mb-6 flex items-center">
         <span className="mr-3">♔</span>
-        전략 선택
+        {APP_TEXTS.dashboard.actions.title}
       </h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {actions.map((action, index) => (
+        {quickActions.map((action, index) => (
           <Link key={index} href={action.href}>
             <Card 
-              className={`cursor-pointer transition-all duration-500 hover:shadow-2xl hover:-translate-y-4 transform group relative ${
-                action.highlight ? 'ring-2 ring-blue-300 shadow-blue-500/20' : ''
-              } bg-white border border-slate-200 shadow-lg hover:border-blue-300 interactive-scale animate-slide-in-up`}
+              className="cursor-pointer transition-all duration-500 hover:shadow-2xl hover:-translate-y-4 transform group relative bg-white border border-slate-200 shadow-lg hover:border-blue-300 interactive-scale animate-slide-in-up"
               style={{animationDelay: `${0.4 + index * 0.2}s`}}
             >
             <CardContent className="p-6 relative overflow-hidden">
@@ -50,12 +93,12 @@ export const ActionsSection: React.FC<ActionsSectionProps> = ({ actions }) => {
                     </div>
                     <div className="group-hover:translate-x-2 transition-transform duration-300">
                       <h3 className="font-bold text-slate-800 text-lg group-hover:text-blue-600 transition-colors">{action.title}</h3>
-                      <p className="text-blue-500 text-sm group-hover:text-blue-600 transition-colors">{action.pieceName} Move</p>
+                      <p className="text-blue-500 text-sm group-hover:text-blue-600 transition-colors">{action.pieceName}</p>
                     </div>
                     {action.highlight && (
                       <Badge className="bg-blue-100 text-blue-600 border-blue-200 animate-pulse">
                         <Zap className="w-3 h-3 mr-1" />
-                        활성화
+                        {APP_TEXTS.dashboard.actions.chessDuel.activate}
                       </Badge>
                     )}
                   </div>

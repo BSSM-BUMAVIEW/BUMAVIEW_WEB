@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { ThemeProvider } from "../styles/ThemeProvider";
 import StyledComponentsRegistry from "../lib/registry";
 import "../styles/globals.css";
+import { APP_TEXTS } from "../constants/texts";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -15,8 +16,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "부마뷰",
-  description: "면접 학습과 경쟁을 위한 종합 플랫폼",
+  title: APP_TEXTS.appName,
+  description: APP_TEXTS.appDescription,
 };
 
 export default function RootLayout({
@@ -26,7 +27,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ko">
-      <body className={`${geistSans.variable} ${geistMono.variable}`}>
+      <body 
+        className={`${geistSans.variable} ${geistMono.variable}`}
+        suppressHydrationWarning={true}
+      >
         <StyledComponentsRegistry>
           <ThemeProvider>
             {children}

@@ -4,7 +4,7 @@ import { Crown, Users, Search, Trophy, Target, Menu } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import type { NavigationProps } from '../types';
-import { NAVIGATION_ITEMS } from '../constants';
+import { APP_TEXTS } from '../constants/texts';
 import {
   HeaderContainer,
   HeaderContent,
@@ -25,11 +25,11 @@ export function Header({ activeSection, onNavigate, isLoggedIn, onLogin, onLogou
   const pathname = usePathname();
   
   const navItems = [
-    { id: 'dashboard', label: '대시보드', icon: Crown, href: '/dashboard' },
-    { id: 'battle', label: '면접 배틀', icon: Users, href: '/battle' },
-    { id: 'search', label: '전략 탐색', icon: Search, href: '/search' },
-    { id: 'rankings', label: '마스터 랭킹', icon: Trophy, href: '/rankings' },
-    { id: 'mock', label: '단독 훈련', icon: Target, href: '/mock' },
+    { id: 'dashboard', label: APP_TEXTS.navigation.dashboard, icon: Crown, href: '/dashboard' },
+    { id: 'battle', label: APP_TEXTS.navigation.interviewBattle, icon: Users, href: '/battle' },
+    { id: 'search', label: APP_TEXTS.navigation.strategySearch, icon: Search, href: '/search' },
+    { id: 'rankings', label: APP_TEXTS.navigation.masterRanking, icon: Trophy, href: '/rankings' },
+    { id: 'mock', label: APP_TEXTS.navigation.soloTraining, icon: Target, href: '/mock' },
   ];
 
   return (
@@ -40,8 +40,8 @@ export function Header({ activeSection, onNavigate, isLoggedIn, onLogin, onLogou
             <Crown size={28} color="white" />
           </LogoIcon>
           <LogoText>
-            <h1>부마뷰</h1>
-            <p>Bumaview</p>
+            <h1>{APP_TEXTS.appName}</h1>
+            <p>{APP_TEXTS.appNameEnglish}</p>
           </LogoText>
         </LogoSection>
 
@@ -92,7 +92,7 @@ export function Header({ activeSection, onNavigate, isLoggedIn, onLogin, onLogou
                 boxShadow: '0 10px 15px -3px rgba(59, 130, 246, 0.2)'
               }}
             >
-              로그인
+              {APP_TEXTS.navigation.login}
             </Button>
           )}
           
