@@ -113,18 +113,7 @@ export function QuestionSearch() {
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-6xl mx-auto">
         {/* Chess Knowledge Archive Header */}
-        <div className="mb-8 text-center">
-          <div className="flex items-center justify-center space-x-4 mb-4">
-            <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center shadow-lg">
-              <span className="text-white text-2xl">♗</span>
-            </div>
-            <h1 className="text-4xl font-bold text-slate-800">지식 탐색</h1>
-            <div className="w-16 h-16 bg-gradient-to-br from-slate-500 to-slate-700 rounded-full flex items-center justify-center shadow-lg">
-              <span className="text-white text-2xl">♗</span>
-            </div>
-          </div>
-          <p className="text-slate-600 text-lg">전략적으로 지식을 탐구하고 마스터하세요</p>
-        </div>
+        
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Strategic Filters */}
@@ -171,17 +160,9 @@ export function QuestionSearch() {
 
               {/* Strategic Actions */}
               <div className="pt-4 border-t border-slate-200 space-y-3">
-                <Button className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:from-blue-400 hover:to-purple-500 shadow-lg" size="sm">
+                <Button className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:from-blue-400 hover:to-purple-500 shadow-lg" size="lg">
                   <span className="mr-2">♔</span>
                   질문 등록
-                </Button>
-                <Button className="w-full border-slate-300 text-slate-600 hover:bg-slate-50" variant="outline" size="sm">
-                  <Upload className="w-4 h-4 mr-2" />
-                  전략서 업로드
-                </Button>
-                <Button className="w-full border-slate-300 text-slate-600 hover:bg-slate-50" variant="outline" size="sm">
-                  <Download className="w-4 h-4 mr-2" />
-                  체스북 다운로드
                 </Button>
               </div>
             </CardContent>
