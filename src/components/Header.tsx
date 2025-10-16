@@ -1,10 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from './ui/button';
-import { Crown, Users, Search, Trophy, Target, Menu } from 'lucide-react';
+import { Crown, Users, Search, Trophy, Target, Menu, LogOut } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import type { NavigationProps } from '../types';
 import { APP_TEXTS } from '../constants/texts';
+import { useAuth } from '../contexts/AuthContext';
+import { LoginModal } from './LoginModal';
 import {
   HeaderContainer,
   HeaderContent,
@@ -23,6 +25,8 @@ import {
 
 export function Header({ activeSection, onNavigate, isLoggedIn, onLogin, onLogout }: NavigationProps) {
   const pathname = usePathname();
+  const { user, isAuthenticated, logout: authLogout } = useAuth();
+  const [showLoginModal, setShowLoginModal] = useState(false);
   
   const navItems = [
     { id: 'dashboard', label: APP_TEXTS.navigation.dashboard, icon: Crown, href: '/dashboard' },
@@ -61,31 +65,33 @@ export function Header({ activeSection, onNavigate, isLoggedIn, onLogin, onLogou
         </Navigation>
 
         <AuthSection>
-          {isLoggedIn ? (
+          {isAuthenticated && user ? (
             <>
               <UserInfo>
                 <UserAvatar>
                   <span style={{ color: 'white', fontSize: '14px', fontWeight: 'bold' }}>♛</span>
                 </UserAvatar>
                 <UserDetails>
-                  <p>정현님</p>
-                  <p>♔ Grandmaster</p>
+                  <p>{user.name}님</p>
+                  <p>Normal</p>
                 </UserDetails>
                 <EloBadge>
-                  <span>2187 ELO</span>
+                  <span>0 ELO</span>
                 </EloBadge>
               </UserInfo>
               <Button 
                 variant="outline" 
                 size="sm" 
-                onClick={onLogout}
+                onClick={() => authLogout()}
+                className="flex items-center space-x-1"
               >
-                로그아웃
+                <LogOut className="w-4 h-4" />
+                <span>로그아웃</span>
               </Button>
             </>
           ) : (
             <Button 
-              onClick={onLogin}
+              onClick={() => setShowLoginModal(true)}
               style={{
                 background: 'linear-gradient(to right, #3b82f6, #8b5cf6)',
                 color: 'white',
@@ -101,6 +107,12 @@ export function Header({ activeSection, onNavigate, isLoggedIn, onLogin, onLogou
           </MobileMenuButton>
         </AuthSection>
       </HeaderContent>
+      
+      {/* 로그인 모달 */}
+      <LoginModal
+        isOpen={showLoginModal}
+        onClose={() => setShowLoginModal(false)}
+      />
     </HeaderContainer>
   );
 }

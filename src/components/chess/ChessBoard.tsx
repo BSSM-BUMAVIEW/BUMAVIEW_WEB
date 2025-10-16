@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Chess } from 'chess.js';
 import { ChessAI } from '../../lib/chessAI';
+import { apiClient } from '../../lib/api';
 import styled from 'styled-components';
 import { APP_TEXTS } from '../../constants/texts';
 
@@ -336,36 +337,12 @@ export const ChessBoard: React.FC<ChessBoardProps> = ({
   const [gameStatus, setGameStatus] = useState<string>(APP_TEXTS.chess.gameStart);
   const [moveHistory, setMoveHistory] = useState<string[]>([]);
   const [canUndo, setCanUndo] = useState(false);
-  const [playerTime, setPlayerTime] = useState(600); // 10분 (초 단위)
-  const [aiTime, setAiTime] = useState(600);
-  const [isPlayerTimer, setIsPlayerTimer] = useState(true);
+  // 시간 관련 상태 제거
   const [checkmateSquare, setCheckmateSquare] = useState<string | null>(null);
   const aiConfig = ChessAI.getConfigForLevel(aiLevel);
   const playerAiConfig = ChessAI.getConfigForLevel(playerAiLevel);
 
-  // 타이머 효과
-  useEffect(() => {
-    const timer = setInterval(() => {
-      if (isPlayerTimer && playerTime > 0) {
-        setPlayerTime(prev => prev - 1);
-      } else if (!isPlayerTimer && aiTime > 0) {
-        setAiTime(prev => prev - 1);
-      }
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, [isPlayerTimer, playerTime, aiTime]);
-
-  // 시간 초과 체크
-  useEffect(() => {
-    if (playerTime === 0) {
-      setGameStatus(APP_TEXTS.chess.timeUpDefeat);
-      onGameEnd?.('lose');
-    } else if (aiTime === 0) {
-      setGameStatus(APP_TEXTS.chess.timeUpVictory);
-      onGameEnd?.('win');
-    }
-  }, [playerTime, aiTime, onGameEnd]);
+  // 시간 관련 로직 제거
 
   // 보드 업데이트 - 더 안정적으로
   const updateBoard = useCallback(() => {
@@ -405,7 +382,6 @@ export const ChessBoard: React.FC<ChessBoardProps> = ({
       chess.undo();
       chess.undo(); // 플레이어와 AI의 수를 모두 되돌림
       setLastMove(null);
-      setIsPlayerTimer(true); // 플레이어 턴으로 되돌림
       updateBoard();
     }
   }, [chess, isAIMoving, updateBoard]);
@@ -423,7 +399,6 @@ export const ChessBoard: React.FC<ChessBoardProps> = ({
           const result = chess.move(move);
           if (result) {
             setLastMove(result.from + result.to);
-            setIsPlayerTimer(false); // AI 타이머로 전환
             updateBoard();
             onMoveComplete?.();
             
@@ -441,7 +416,6 @@ export const ChessBoard: React.FC<ChessBoardProps> = ({
               const result = chess.move(randomMove);
               if (result) {
                 setLastMove(result.from + result.to);
-                setIsPlayerTimer(false);
                 updateBoard();
                 onMoveComplete?.();
                 
@@ -461,7 +435,6 @@ export const ChessBoard: React.FC<ChessBoardProps> = ({
             const result = chess.move(randomMove);
             if (result) {
               setLastMove(result.from + result.to);
-              setIsPlayerTimer(false);
               updateBoard();
               onMoveComplete?.();
               
@@ -482,7 +455,7 @@ export const ChessBoard: React.FC<ChessBoardProps> = ({
           const result = chess.move(randomMove);
           if (result) {
             setLastMove(result.from + result.to);
-            setIsPlayerTimer(false);
+            // setIsPlayerTimer(false);
             updateBoard();
             onMoveComplete?.();
             
@@ -503,34 +476,67 @@ export const ChessBoard: React.FC<ChessBoardProps> = ({
       setIsAIMoving(true);
       
       try {
-        const ai = new ChessAI(chess, aiConfig);
-        const move = await ai.getBestMove();
+        // API로 체스 수 요청
+        const currentFEN = chess.fen();
+        const response = await apiClient.getChessMove(currentFEN, aiLevel);
         
-        if (move) {
-          const result = chess.move(move);
+        if (response && response.move) {
+          // API에서 받은 수를 체스판에 적용
+          const result = chess.move(response.move);
           if (result) {
             setLastMove(result.from + result.to);
-            setIsPlayerTimer(true); // 플레이어 타이머로 전환
             updateBoard();
             onMoveComplete?.();
           } else {
-            // AI가 제안한 수가 유효하지 않은 경우 랜덤 수 선택
-            const moves = chess.moves({ verbose: true });
-            if (moves.length > 0) {
-              const seed = Date.now() + chess.history().length;
-              const randomIndex = Math.floor((Math.sin(seed) * 10000) % 1 * moves.length);
-              const randomMove = moves[Math.abs(randomIndex)];
-              const result = chess.move(randomMove);
+            // API 수가 유효하지 않은 경우 로컬 AI로 폴백
+            console.warn('API 수가 유효하지 않음, 로컬 AI로 폴백');
+            const ai = new ChessAI(chess, aiConfig);
+            const move = await ai.getBestMove();
+            
+            if (move) {
+              const result = chess.move(move);
               if (result) {
                 setLastMove(result.from + result.to);
-                setIsPlayerTimer(true);
                 updateBoard();
                 onMoveComplete?.();
               }
             }
           }
         } else {
-          // AI가 수를 찾지 못한 경우 랜덤 수 선택
+          // API 응답이 없으면 로컬 AI로 폴백
+          console.warn('API 응답 없음, 로컬 AI로 폴백');
+          const ai = new ChessAI(chess, aiConfig);
+          const move = await ai.getBestMove();
+          
+          if (move) {
+            const result = chess.move(move);
+            if (result) {
+              setLastMove(result.from + result.to);
+              // setIsPlayerTimer(true);
+              updateBoard();
+              onMoveComplete?.();
+            }
+          }
+        }
+      } catch (error) {
+        console.error('API 체스 AI 실패, 로컬 AI로 폴백:', error);
+        // API 실패 시 로컬 AI로 폴백
+        try {
+          const ai = new ChessAI(chess, aiConfig);
+          const move = await ai.getBestMove();
+          
+          if (move) {
+            const result = chess.move(move);
+            if (result) {
+              setLastMove(result.from + result.to);
+              // setIsPlayerTimer(true);
+              updateBoard();
+              onMoveComplete?.();
+            }
+          }
+        } catch (fallbackError) {
+          console.error('로컬 AI도 실패:', fallbackError);
+          // 최종 폴백: 랜덤 수
           const moves = chess.moves({ verbose: true });
           if (moves.length > 0) {
             const seed = Date.now() + chess.history().length;
@@ -539,26 +545,10 @@ export const ChessBoard: React.FC<ChessBoardProps> = ({
             const result = chess.move(randomMove);
             if (result) {
               setLastMove(result.from + result.to);
-              setIsPlayerTimer(true);
+              // setIsPlayerTimer(true);
               updateBoard();
               onMoveComplete?.();
             }
-          }
-        }
-      } catch (error) {
-        console.error('AI move error:', error);
-        // AI가 유효하지 않은 수를 두려고 할 때 랜덤 수 선택
-        const moves = chess.moves({ verbose: true });
-        if (moves.length > 0) {
-          const seed = Date.now() + chess.history().length;
-          const randomIndex = Math.floor((Math.sin(seed) * 10000) % 1 * moves.length);
-          const randomMove = moves[Math.abs(randomIndex)];
-          const result = chess.move(randomMove);
-          if (result) {
-            setLastMove(result.from + result.to);
-            setIsPlayerTimer(true);
-            updateBoard();
-            onMoveComplete?.();
           }
         }
       } finally {
@@ -666,20 +656,6 @@ export const ChessBoard: React.FC<ChessBoardProps> = ({
         {isPlayerAIMoving && <AIThinking>🤖 {APP_TEXTS.interviewBattle.chess.yourAI}가 생각 중...</AIThinking>}
         {isAIMoving && <AIThinking>🤖 {APP_TEXTS.interviewBattle.chess.opponentAI}가 생각 중...</AIThinking>}
         
-        <TimerDisplay>
-          <Timer $isActive={isPlayerTimer} $isLow={playerTime < 60}>
-            <TimerLabel>플레이어</TimerLabel>
-            <TimerValue $isLow={playerTime < 60}>
-              {Math.floor(playerTime / 60)}:{(playerTime % 60).toString().padStart(2, '0')}
-            </TimerValue>
-          </Timer>
-          <Timer $isActive={!isPlayerTimer} $isLow={aiTime < 60}>
-            <TimerLabel>AI</TimerLabel>
-            <TimerValue $isLow={aiTime < 60}>
-              {Math.floor(aiTime / 60)}:{(aiTime % 60).toString().padStart(2, '0')}
-            </TimerValue>
-          </Timer>
-        </TimerDisplay>
         
         <ControlButtons>
           <ControlButton 
@@ -693,9 +669,6 @@ export const ChessBoard: React.FC<ChessBoardProps> = ({
                   chess.reset();
                   setLastMove(null);
                   setCheckmateSquare(null);
-                  setPlayerTime(600);
-                  setAiTime(600);
-                  setIsPlayerTimer(true);
                   updateBoard();
                 }}
                 $disabled={isAIMoving}

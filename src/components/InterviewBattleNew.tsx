@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { ChessBoard } from './chess/ChessBoard';
 import { ChessAI } from '../lib/chessAI';
+import { apiClient, type Question as APIQuestion, type ScoringResponse } from '../lib/api';
 import {
   BattleContainer,
   QuestionPanel,
@@ -46,15 +47,15 @@ export const InterviewBattleNew: React.FC = () => {
   // 고정된 초기값으로 하이드레이션 문제 해결 - null 타입 제거
   const [currentQuestion, setCurrentQuestion] = useState<Question>({
     id: '1',
-    text: APP_TEXTS.sampleData.questions[0].text,
-    category: APP_TEXTS.sampleData.questions[0].category,
-    difficulty: APP_TEXTS.sampleData.questions[0].difficulty,
+    text: '질문을 불러오는 중입니다...',
+    category: 'loading',
+    difficulty: 'medium' as const,
     timeLimit: 300
   });
   
   const [opponent, setOpponent] = useState<Opponent>({
-    name: APP_TEXTS.sampleData.opponents[1].name, // 허세진
-    avatar: APP_TEXTS.sampleData.opponents[1].avatar,
+    name: 'AI 상대',
+    avatar: '🤖',
     level: 12,
     rating: 1750
   });
@@ -73,72 +74,142 @@ export const InterviewBattleNew: React.FC = () => {
     answer: string;
     score: number;
     timestamp: Date;
+    scoringResponse?: ScoringResponse;
   }[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [apiQuestions, setApiQuestions] = useState<APIQuestion[]>([]);
+  const [currentQuestionStartTime, setCurrentQuestionStartTime] = useState<number>(Date.now());
+  const [currentApiScore, setCurrentApiScore] = useState<number>(0);
 
-  // 샘플 질문들
-  const sampleQuestions: Question[] = APP_TEXTS.sampleData.questions.map((q, index) => ({
-    id: (index + 1).toString(),
-    text: q.text,
-    category: q.category,
-    difficulty: q.difficulty,
-    timeLimit: 300
-  }));
-
-  // 샘플 상대방들
-  const sampleOpponents: Opponent[] = APP_TEXTS.sampleData.opponents.map((opponent, index) => ({
-    name: opponent.name,
-    avatar: opponent.avatar,
-    level: 12 + index * 2,
-    rating: 1650 + index * 150
-  }));
+  // 더미 데이터 제거됨 - API 데이터만 사용
 
 
-  // 게임 초기화는 이제 useState 초기값에서 처리됨
+  // API에서 랜덤 질문 가져오기
+  const fetchRandomQuestion = async () => {
+    try {
+      setIsLoading(true);
+      console.log('🔄 랜덤 질문 요청 시작...');
+      const question = await apiClient.getRandomQuestion();
+      console.log('✅ 랜덤 질문 받음:', question);
+      
+      setCurrentQuestion({
+        id: question.id.toString(),
+        text: question.content,
+        category: question.category,
+        difficulty: 'medium' as const,
+        timeLimit: 300
+      });
+      setCurrentQuestionStartTime(Date.now());
+    } catch (error) {
+      console.error('❌ 질문을 가져오는데 실패했습니다:', error);
+      // API 실패 시 기본 질문 사용
+      setCurrentQuestion({
+        id: '1',
+        text: 'API 연결에 실패했습니다. 잠시 후 다시 시도해주세요.',
+        category: 'system',
+        difficulty: 'medium' as const,
+        timeLimit: 300
+      });
+      setCurrentQuestionStartTime(Date.now());
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // 컴포넌트 마운트 시 API 테스트 및 질문 가져오기
+  useEffect(() => {
+    const initializeAPI = async () => {
+      // API 연결 테스트
+      await apiClient.testConnections();
+      
+      // 질문 가져오기
+      await fetchRandomQuestion();
+    };
+    
+    initializeAPI();
+  }, []);
 
   // 답변 제출
-  const handleSubmitAnswer = () => {
+  const handleSubmitAnswer = async () => {
     if (!answer.trim()) return;
 
     setIsAnswered(true);
+    setIsLoading(true);
     
-    // 답변 품질 평가 (간단한 예시)
-    const answerLength = answer.length;
-    const hasKeywords = currentQuestion?.text.toLowerCase().includes('react') ? 
-      answer.toLowerCase().includes('effect') || answer.toLowerCase().includes('dependency') : true;
-    
-    let answerScore = 0;
-    if (answerLength > 100) answerScore += 30;
-    if (answerLength > 200) answerScore += 20;
-    if (hasKeywords) answerScore += 30;
-    if (answer.includes('예시') || answer.includes('예를 들어')) answerScore += 20;
-    
-    answerScore = Math.min(answerScore, 100);
-    
-    // 답변 품질에 따른 플레이어 AI 레벨 조정
-    const newPlayerAiLevel = Math.max(1, Math.min(25, playerAiLevel + Math.floor((answerScore - 50) / 10)));
-    setPlayerAiLevel(newPlayerAiLevel);
-    setScore(prev => prev + answerScore);
-    
-    // 답변한 질문 저장
-    setAnsweredQuestions(prev => [...prev, {
-      question: currentQuestion,
-      answer: answer,
-      score: answerScore,
-      timestamp: new Date()
-    }]);
-    
-    // 체스 수 트리거
-    setTriggerChessMove(true);
-    
-    // 다음 질문으로
-    setTimeout(() => {
-      const seed = Date.now() + Math.random() * 1000;
-      const nextIndex = Math.floor((Math.sin(seed) * 10000) % 1 * sampleQuestions.length);
-      const nextQuestion = sampleQuestions[Math.abs(nextIndex)] || sampleQuestions[0];
-      setCurrentQuestion(nextQuestion);
-      setAnswer('');
-      setIsAnswered(false);
-    }, 2000);
+    try {
+      // 응답 시간 계산
+      const responseTime = (Date.now() - currentQuestionStartTime) / 1000;
+      
+      // API로 답변 채점 요청
+      const scoringResponse = await apiClient.scoreAnswer({
+        question_id: parseInt(currentQuestion.id),
+        answer: answer,
+        response_time: responseTime
+      });
+
+      // API 응답에서 점수 추출
+      const answerScore = Math.round(scoringResponse.scores.total_score * 10); // 0-100 스케일로 변환
+      
+      // API 점수를 현재 점수로 설정
+      setCurrentApiScore(scoringResponse.scores.total_score);
+      
+      // 답변 품질에 따른 플레이어 AI 레벨 조정 (API 점수 기반)
+      const newPlayerAiLevel = Math.max(1, Math.min(25, Math.round(scoringResponse.scores.total_score * 25 / 10))); // 0-10 스케일을 1-25로 변환
+      setPlayerAiLevel(newPlayerAiLevel);
+      setScore(prev => prev + answerScore);
+      
+      // 답변한 질문 저장 (API 응답 포함)
+      setAnsweredQuestions(prev => [...prev, {
+        question: currentQuestion,
+        answer: answer,
+        score: answerScore,
+        timestamp: new Date(),
+        scoringResponse: scoringResponse
+      }]);
+      
+      // 체스 수 트리거 (API에서 받은 FEN 사용)
+      setTriggerChessMove(true);
+      
+      // 다음 질문으로 (새로운 랜덤 질문 가져오기)
+      setTimeout(() => {
+        fetchRandomQuestion();
+        setAnswer('');
+        setIsAnswered(false);
+      }, 2000);
+      
+    } catch (error) {
+      console.error('답변 채점에 실패했습니다:', error);
+      
+      // API 실패 시 로컬 점수 계산
+      const answerLength = answer.length;
+      const answerScore = Math.min(answerLength * 0.5, 100);
+      const localApiScore = answerScore / 10; // 0-10 스케일로 변환
+      
+      // 로컬 점수를 현재 점수로 설정
+      setCurrentApiScore(localApiScore);
+      
+      const newPlayerAiLevel = Math.max(1, Math.min(25, Math.round(localApiScore * 25 / 10))); // 0-10 스케일을 1-25로 변환
+      setPlayerAiLevel(newPlayerAiLevel);
+      setScore(prev => prev + answerScore);
+      
+      setAnsweredQuestions(prev => [...prev, {
+        question: currentQuestion,
+        answer: answer,
+        score: answerScore,
+        timestamp: new Date()
+      }]);
+      
+      setTriggerChessMove(true);
+      
+      // 다음 질문으로 (새로운 랜덤 질문 가져오기)
+      setTimeout(() => {
+        fetchRandomQuestion();
+        setAnswer('');
+        setIsAnswered(false);
+      }, 2000);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // 체스 게임 종료 처리
@@ -250,13 +321,15 @@ export const InterviewBattleNew: React.FC = () => {
                   setIsPlayerTurn(true);
                   setFinalChessFEN(null);
                   setAnsweredQuestions([]);
-                  // 게임 재시작
-                  const seed = Date.now();
-                  const questionIndex = Math.floor((Math.sin(seed) * 10000) % 1 * sampleQuestions.length);
-                  const opponentIndex = Math.floor((Math.sin(seed * 2) * 10000) % 1 * sampleOpponents.length);
-                  setCurrentQuestion(sampleQuestions[Math.abs(questionIndex)] || sampleQuestions[0]);
-                  setOpponent(sampleOpponents[Math.abs(opponentIndex)] || sampleOpponents[0]);
-                  setAiLevel((sampleOpponents[Math.abs(opponentIndex)] || sampleOpponents[0]).level);
+                  // 게임 재시작 - API에서 새 질문 가져오기
+                  fetchRandomQuestion();
+                  setOpponent({
+                    name: 'AI 상대',
+                    avatar: '🤖',
+                    level: 12,
+                    rating: 1650
+                  });
+                  setAiLevel(12);
                 }}
                 style={{
                   padding: '0.75rem 1.5rem',
@@ -347,12 +420,12 @@ export const InterviewBattleNew: React.FC = () => {
             placeholder={APP_TEXTS.interviewBattle.question.placeholder}
             disabled={isAnswered}
           />
-          <SubmitButton
-            onClick={handleSubmitAnswer}
-            disabled={isAnswered || !answer.trim()}
-          >
-            {isAnswered ? APP_TEXTS.interviewBattle.question.submitted : APP_TEXTS.interviewBattle.question.submit}
-          </SubmitButton>
+              <SubmitButton
+                onClick={handleSubmitAnswer}
+                disabled={isAnswered || !answer.trim() || isLoading}
+              >
+                {isLoading ? '채점 중...' : isAnswered ? APP_TEXTS.interviewBattle.question.submitted : APP_TEXTS.interviewBattle.question.submit}
+              </SubmitButton>
         </AnswerSection>
 
         {isAnswered && (
@@ -389,8 +462,26 @@ export const InterviewBattleNew: React.FC = () => {
 
         <AIControls>
           <AILabel>
-            당신의 AI 레벨: {playerAiLevel} ({ChessAI.getLevelName(playerAiLevel)})
+            당신의 AI: {playerAiLevel} ({ChessAI.getLevelName(playerAiLevel)}) | 상대 AI: {aiLevel} ({ChessAI.getLevelName(aiLevel)})
           </AILabel>
+          {currentApiScore > 0 && (
+            <div style={{ 
+              marginTop: '0.5rem',
+              padding: '0.5rem',
+              background: '#f0fdf4',
+              border: '1px solid #22c55e',
+              borderRadius: '0.375rem',
+              textAlign: 'center'
+            }}>
+              <span style={{ 
+                color: '#16a34a', 
+                fontSize: '0.875rem',
+                fontWeight: '600'
+              }}>
+                최근 답변 점수: {currentApiScore.toFixed(1)}/10
+              </span>
+            </div>
+          )}
           <div style={{ 
             padding: '1rem', 
             background: '#f0f9ff', 

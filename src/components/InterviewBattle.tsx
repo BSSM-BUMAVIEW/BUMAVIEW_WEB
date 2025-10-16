@@ -36,54 +36,22 @@ export function InterviewBattle() {
   const [answer, setAnswer] = useState("");
   const [timeLeft, setTimeLeft] = useState(180); // 3 minutes
 
-  const activeRooms = [
-    {
-      id: "1",
-      name: "초급자 배틀",
-      host: "민수님",
-      difficulty: "초급",
-      players: 1,
-      maxPlayers: 2,
-      category: "프론트엔드",
-      status: "waiting",
-    },
-    {
-      id: "2",
-      name: "React 마스터",
-      host: "지영님",
-      difficulty: "중급",
-      players: 1,
-      maxPlayers: 2,
-      category: "React",
-      status: "waiting",
-    },
-    {
-      id: "3",
-      name: "고수들의 대결",
-      host: "현우님",
-      difficulty: "고급",
-      players: 2,
-      maxPlayers: 2,
-      category: "전체",
-      status: "in-progress",
-    },
-  ];
+  const activeRooms: any[] = []; // 더미 데이터 제거됨 - API에서 실제 방 목록을 가져와야 함
 
   const currentQuestion = {
     id: 1,
-    question:
-      "React Hook의 개념과 useState의 동작 원리에 대해 설명해주세요.",
-    category: "React",
+    question: "질문을 불러오는 중입니다...",
+    category: "loading",
     difficulty: "중급",
     timeLimit: 180,
   };
 
   const battleResult = {
-    winner: "me",
-    myScore: 85,
-    opponentScore: 72,
-    pointsEarned: 15,
-    newRank: "Gold III",
+    winner: "loading",
+    myScore: 0,
+    opponentScore: 0,
+    pointsEarned: 0,
+    newRank: "Loading...",
   };
 
   const formatTime = (seconds: number) => {

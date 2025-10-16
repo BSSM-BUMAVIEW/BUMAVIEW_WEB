@@ -25,8 +25,8 @@ export const HeroSection: React.FC = () => {
     <HeroContainer>
       <ChessPatternOverlay />
       
-      <FloatingOrb top="1rem" left="1rem" size="4rem" />
-      <FloatingOrb bottom="1rem" right="25%" size="5rem" delay="2s" />
+      <FloatingOrb $top="1rem" $left="1rem" $size="4rem" />
+      <FloatingOrb $bottom="1rem" $right="25%" $size="5rem" $delay="2s" />
       
       <HeroContent>
         <TitleSection>

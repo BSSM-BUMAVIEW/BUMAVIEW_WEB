@@ -27,25 +27,25 @@ export const ChessPatternOverlay = styled.div`
 `;
 
 export const FloatingOrb = styled.div<{ 
-  top?: string; 
-  left?: string; 
-  bottom?: string; 
-  right?: string; 
-  size: string;
-  delay?: string;
+  $top?: string; 
+  $left?: string; 
+  $bottom?: string; 
+  $right?: string; 
+  $size: string;
+  $delay?: string;
 }>`
   position: absolute;
-  width: ${props => props.size};
-  height: ${props => props.size};
+  width: ${props => props.$size};
+  height: ${props => props.$size};
   background: rgba(59, 130, 246, 0.3);
   border-radius: 50%;
   filter: blur(2rem);
   animation: float 3s ease-in-out infinite;
-  animation-delay: ${props => props.delay || '0s'};
-  top: ${props => props.top || 'auto'};
-  left: ${props => props.left || 'auto'};
-  bottom: ${props => props.bottom || 'auto'};
-  right: ${props => props.right || 'auto'};
+  animation-delay: ${props => props.$delay || '0s'};
+  top: ${props => props.$top || 'auto'};
+  left: ${props => props.$left || 'auto'};
+  bottom: ${props => props.$bottom || 'auto'};
+  right: ${props => props.$right || 'auto'};
 `;
 
 export const HeroContent = styled.div`

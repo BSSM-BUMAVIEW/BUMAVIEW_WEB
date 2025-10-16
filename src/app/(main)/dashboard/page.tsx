@@ -1,25 +1,23 @@
-import React from 'react';
+'use client';
+import React, { useState } from 'react';
 import { HeroSection } from '../../../components/dashboard/HeroSection';
 import { StatsSection } from '../../../components/dashboard/StatsSection';
 import { ActionsSection } from '../../../components/dashboard/ActionsSection';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../components/ui/card';
 import { ChevronRight } from 'lucide-react';
 import Link from 'next/link';
+import { apiClient } from '../../../lib/api';
+import { useAuth } from '../../../contexts/AuthContext';
 
 export default function DashboardPage() {
-  const quickStats = [
-    { label: '전체 질문', value: '1,247', icon: '♖', piece: 'Rook', color: 'from-slate-500 to-slate-700', delay: '0s' },
-    { label: '승리한 게임', value: '23', icon: '♘', piece: 'Knight', color: 'from-blue-500 to-blue-700', delay: '0.1s' },
-    { label: '승률', value: '67%', icon: '♗', piece: 'Bishop', color: 'from-purple-500 to-purple-700', delay: '0.2s' },
-    { label: 'ELO 레이팅', value: '2,187', icon: '♕', piece: 'Queen', color: 'from-emerald-500 to-emerald-700', delay: '0.3s' },
-  ];
+  const { user, isAuthenticated } = useAuth();
+  const quickStats: Array<{ label: string; value: string; icon: string; color: string; delay: string }> = []; // 가짜 통계 데이터 제거됨 - API에서 실제 통계를 가져와야 함
 
   const quickActions = [
     {
       title: '체스 듀얼',
       description: '실시간 면접 대결로 실력을 겨루세요',
       piece: '♞',
-      pieceName: 'Knight',
       color: 'from-red-500 to-red-700',
       href: '/battle',
       highlight: true,
@@ -29,7 +27,6 @@ export default function DashboardPage() {
       title: '지식 탐색',
       description: '전략적으로 질문을 분석하고 학습하세요',
       piece: '♗',
-      pieceName: 'Bishop',
       color: 'from-blue-500 to-blue-700',
       href: '/search',
       position: 'b8'
@@ -38,7 +35,6 @@ export default function DashboardPage() {
       title: '단독 훈련',
       description: '집중적인 개인 연습으로 실력을 향상시키세요',
       piece: '♖',
-      pieceName: 'Rook',
       color: 'from-emerald-500 to-emerald-700',
       href: '/mock',
       position: 'h1'
@@ -47,18 +43,13 @@ export default function DashboardPage() {
       title: '명예의 전당',
       description: '최고 수준의 마스터들과 견주어보세요',
       piece: '♕',
-      pieceName: 'Queen',
       color: 'from-amber-500 to-amber-700',
       href: '/rankings',
       position: 'd8'
     }
   ];
 
-  const recentActivities = [
-    { type: '배틀 승리', opponent: '세진님', time: '2시간 전', score: '+15 점' },
-    { type: '답변 등록', question: 'React Hook에 대해 설명해주세요', time: '1일 전', likes: '3 좋아요' },
-    { type: '질문 추가', question: 'TypeScript의 장점은?', time: '2일 전', status: '승인됨' },
-  ];
+  const recentActivities: Array<{ type: string; opponent?: string; time: string; score?: string; question?: string; likes?: string; status?: string }> = []; // 가짜 최근 경기 데이터 제거됨 - API에서 실제 활동을 가져와야 함
 
   return (
     <div style={{ 
@@ -71,7 +62,7 @@ export default function DashboardPage() {
     }}>
       <HeroSection />
       <StatsSection stats={quickStats} />
-      <ActionsSection actions={quickActions} />
+      <ActionsSection onNavigate={() => {}} />
 
       {/* Recent Activities & Progress */}
       <div style={{ 
@@ -101,8 +92,14 @@ export default function DashboardPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              {recentActivities.map((activity, index) => (
+            {recentActivities.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '3rem 0' }}>
+                <div style={{ color: '#64748b', marginBottom: '1rem' }}>아직 활동 기록이 없습니다.</div>
+                <div style={{ fontSize: '14px', color: '#94a3b8' }}>첫 번째 면접 배틀을 시작해보세요!</div>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                {recentActivities.map((activity, index) => (
                 <div 
                   key={index} 
                   style={{
@@ -152,11 +149,106 @@ export default function DashboardPage() {
                     </p>
                   </div>
                 </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
 
+      {/* Question Upload & Sample Download */}
+      <Card style={{ 
+        backgroundColor: 'white', 
+        border: '1px solid #e2e8f0', 
+        borderRadius: '0.5rem',
+        boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
+      }}>
+        <CardHeader>
+          <CardTitle style={{ color: '#1e293b' }}>
+           질문 업로드 (CSV)
+          </CardTitle>
+          <CardDescription style={{ color: '#64748b' }}>
+            샘플 파일을 내려받아 형식에 맞게 작성 후 업로드하세요
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
+            <button
+              type="button"
+              onClick={async () => {
+                try {
+                  const blob = await apiClient.downloadQuestionSample();
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = 'sample_questions.csv';
+                  document.body.appendChild(a);
+                  a.click();
+                  a.remove();
+                  URL.revokeObjectURL(url);
+                } catch (err) {
+                  console.error('샘플 다운로드 실패:', err);
+                  alert('샘플 다운로드에 실패했습니다.');
+                }
+              }}
+              style={{
+                padding: '0.6rem 1rem',
+                border: '1px solid #e2e8f0',
+                borderRadius: '0.5rem',
+                background: 'white',
+                color: '#1e293b'
+              }}
+            >
+              샘플 다운로드
+            </button>
+
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                const form = e.currentTarget as HTMLFormElement;
+                const fd = new FormData(form);
+                const file = fd.get('file') as File;
+                if (!file || file.size === 0) return alert('CSV 파일을 선택해주세요.');
+                if (!isAuthenticated || !user?.id) return alert('로그인이 필요합니다.');
+                try {
+                  await apiClient.uploadQuestions(file, Number(user.id));
+                  alert('질문 업로드가 완료되었습니다.');
+                  form.reset();
+                } catch (err) {
+                  console.error('업로드 실패:', err);
+                  alert('업로드에 실패했습니다. 로그인/권한 및 파일 형식을 확인해주세요.');
+                }
+              }}
+              style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}
+            >
+              <input
+                type="file"
+                name="file"
+                accept=".csv"
+                style={{
+                  padding: '0.6rem',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '0.5rem'
+                }}
+              />
+              <button
+                type="submit"
+                style={{
+                  padding: '0.6rem 1rem',
+                  background: 'linear-gradient(to right, #3b82f6, #8b5cf6)',
+                  color: 'white',
+                  borderRadius: '0.5rem'
+                }}
+              >
+                업로드
+              </button>
+            </form>
+
+            <div style={{ marginTop: '0.5rem', fontSize: '12px', color: '#94a3b8' }}>
+              엔드포인트: GET /question/sample, POST /question/upload (file, userId)
+            </div>
+          </div>
+        </CardContent>
+      </Card>
         {/* Mastery Progress */}
         <Card style={{ 
           backgroundColor: 'white', 
@@ -178,119 +270,100 @@ export default function DashboardPage() {
               체스 마스터로 가는 여정입니다
             </CardDescription>
           </CardHeader>
-          <CardContent style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-            <div style={{ 
-              cursor: 'pointer', 
-              padding: '0.5rem', 
-              borderRadius: '0.5rem',
-              transition: 'background-color 0.3s ease'
-            }}>
-              <div style={{ 
-                display: 'flex', 
-                justifyContent: 'space-between', 
-                fontSize: '14px', 
-                marginBottom: '0.5rem' 
-              }}>
-                <span style={{ color: '#64748b' }}>일일 훈련 (5수)</span>
-                <span style={{ fontWeight: '500', color: '#1e293b' }}>3/5</span>
-              </div>
-              <div style={{ 
-                backgroundColor: '#e2e8f0', 
-                borderRadius: '9999px', 
-                height: '8px', 
-                overflow: 'hidden' 
-              }}>
-                <div style={{ 
-                  background: 'linear-gradient(to right, #3b82f6, #8b5cf6)', 
-                  height: '100%', 
-                  width: '60%',
-                  borderRadius: '9999px',
-                  transition: 'all 1s ease'
-                }} />
-              </div>
-            </div>
-            
-            <div style={{ 
-              cursor: 'pointer', 
-              padding: '0.5rem', 
-              borderRadius: '0.5rem',
-              transition: 'background-color 0.3s ease'
-            }}>
-              <div style={{ 
-                display: 'flex', 
-                justifyContent: 'space-between', 
-                fontSize: '14px', 
-                marginBottom: '0.5rem' 
-              }}>
-                <span style={{ color: '#64748b' }}>주간 도전 (30수)</span>
-                <span style={{ fontWeight: '500', color: '#1e293b' }}>18/30</span>
-              </div>
-              <div style={{ 
-                backgroundColor: '#e2e8f0', 
-                borderRadius: '9999px', 
-                height: '8px', 
-                overflow: 'hidden' 
-              }}>
-                <div style={{ 
-                  background: 'linear-gradient(to right, #3b82f6, #8b5cf6)', 
-                  height: '100%', 
-                  width: '60%',
-                  borderRadius: '9999px',
-                  transition: 'all 1s ease'
-                }} />
-              </div>
-            </div>
-
-            <div style={{ 
-              paddingTop: '1rem', 
-              borderTop: '1px solid #e2e8f0', 
-              cursor: 'pointer', 
-              padding: '0.75rem', 
-              borderRadius: '0.5rem',
-              transition: 'background-color 0.3s ease'
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <div>
-                  <p style={{ fontWeight: '500', color: '#1e293b', margin: 0 }}>연속 플레이</p>
-                  <p style={{ fontSize: '14px', color: '#3b82f6', margin: 0 }}>7일째 연속 승부 중!</p>
-                </div>
-                <div style={{ fontSize: '24px' }}>♔</div>
-              </div>
-            </div>
-
-            {/* Achievement badges */}
-            <div style={{ paddingTop: '1rem', borderTop: '1px solid #e2e8f0' }}>
-              <p style={{ fontSize: '14px', color: '#64748b', marginBottom: '0.75rem', margin: 0 }}>최근 달성 업적</p>
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
-                <div style={{
-                  padding: '0.25rem 0.75rem',
-                  backgroundColor: '#dbeafe',
-                  border: '1px solid #bfdbfe',
-                  borderRadius: '9999px',
-                  fontSize: '12px',
-                  color: '#1d4ed8',
-                  cursor: 'pointer',
-                  transition: 'background-color 0.3s ease'
-                }}>
-                  🏆 연승 달성
-                </div>
-                <div style={{
-                  padding: '0.25rem 0.75rem',
-                  backgroundColor: '#e9d5ff',
-                  border: '1px solid #d8b4fe',
-                  borderRadius: '9999px',
-                  fontSize: '12px',
-                  color: '#7c3aed',
-                  cursor: 'pointer',
-                  transition: 'background-color 0.3s ease'
-                }}>
-                  ⚡ 빠른 승부
-                </div>
-              </div>
+          <CardContent>
+            <div style={{ textAlign: 'center', padding: '3rem 0' }}>
+              <div style={{ color: '#64748b', marginBottom: '1rem' }}>아직 진행도 데이터가 없습니다.</div>
+              <div style={{ fontSize: '14px', color: '#94a3b8' }}>면접 배틀을 통해 진행도를 쌓아보세요!</div>
             </div>
           </CardContent>
         </Card>
       </div>
+
+      {/* Subscriptions Section */}
+      <Card style={{ 
+        backgroundColor: 'white', 
+        border: '1px solid #e2e8f0', 
+        borderRadius: '0.5rem',
+        boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
+      }}>
+        <CardHeader>
+          <CardTitle style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#1e293b' }}>
+            <span style={{ color: '#3b82f6' }}>♟</span>
+            <span>카테고리 구독</span>
+          </CardTitle>
+          <CardDescription style={{ color: '#64748b' }}>
+            관심 카테고리를 구독하고 새 질문을 메일로 받아보세요
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form
+            onSubmit={async (e) => {
+              e.preventDefault();
+              const form = e.currentTarget as HTMLFormElement;
+              const formData = new FormData(form);
+              const category = (formData.get('category') as string || '').trim();
+              if (!category) return;
+              try {
+                await apiClient.subscribeToCategory(category);
+                alert(`'${category}' 구독이 완료되었습니다.`);
+                form.reset();
+              } catch (err) {
+                console.error('구독 실패:', err);
+                alert('구독에 실패했습니다. 로그인 여부와 네트워크를 확인해주세요.');
+              }
+            }}
+            style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}
+          >
+            <input
+              name="category"
+              placeholder="예: 백엔드, 프론트, AI, devops"
+              style={{
+                flex: 1,
+                padding: '0.75rem 1rem',
+                border: '1px solid #e2e8f0',
+                borderRadius: '0.5rem'
+              }}
+            />
+            <button
+              type="submit"
+              style={{
+                padding: '0.75rem 1rem',
+                background: 'linear-gradient(to right, #3b82f6, #8b5cf6)',
+                color: 'white',
+                borderRadius: '0.5rem'
+              }}
+            >
+              구독하기
+            </button>
+            <button
+              type="button"
+              onClick={async () => {
+                try {
+                  await apiClient.sendEmailNow();
+                  alert('즉시 메일 발송을 요청했습니다.');
+                } catch (err) {
+                  console.error('즉시 메일 실패:', err);
+                  alert('즉시 메일 요청에 실패했습니다.');
+                }
+              }}
+              style={{
+                padding: '0.75rem 1rem',
+                border: '1px solid #e2e8f0',
+                borderRadius: '0.5rem',
+                background: 'white',
+                color: '#1e293b'
+              }}
+            >
+              즉시 메일 받기
+            </button>
+          </form>
+
+          <div style={{ marginTop: '1rem', fontSize: '12px', color: '#94a3b8' }}>
+            예: {`{ "category": "백엔드" }`} 로 POST /subscriptions, 그리고 POST /subscriptions/send-now 지원
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Year Search removed - moved to Search page */}
     </div>
   );
-}

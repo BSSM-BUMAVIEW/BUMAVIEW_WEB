@@ -1,26 +1,44 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, Building2, Loader2 } from 'lucide-react';
 import type { DashboardProps } from '../types';
 import { HeroSection } from './dashboard/HeroSection';
 import { StatsSection } from './dashboard/StatsSection';
 import { ActionsSection } from './dashboard/ActionsSection';
 import { APP_TEXTS } from '../constants/texts';
+import { apiClient, Company } from '../lib/api';
 
 export function Dashboard({ onNavigate }: DashboardProps) {
-  const quickStats = [
-    { label: APP_TEXTS.dashboard.stats.totalQuestions, value: '1,247', icon: '♖', piece: 'Rook', color: 'from-slate-500 to-slate-700', delay: '0s' },
-    { label: APP_TEXTS.dashboard.stats.gamesWon, value: '23', icon: '♘', piece: 'Knight', color: 'from-blue-500 to-blue-700', delay: '0.1s' },
-    { label: APP_TEXTS.dashboard.stats.winRate, value: '67%', icon: '♗', piece: 'Bishop', color: 'from-purple-500 to-purple-700', delay: '0.2s' },
-    { label: APP_TEXTS.dashboard.stats.eloRating, value: '2,187', icon: '♕', piece: 'Queen', color: 'from-emerald-500 to-emerald-700', delay: '0.3s' },
-  ];
+  const [companies, setCompanies] = useState<Company[]>([]);
+  const [isLoadingCompanies, setIsLoadingCompanies] = useState(false);
 
+  // 회사 목록 가져오기
+  const fetchCompanies = async () => {
+    try {
+      setIsLoadingCompanies(true);
+      const companiesData = await apiClient.getCompanies();
+      setCompanies(companiesData.slice(0, 6)); // 최대 6개만 표시
+    } catch (error) {
+      console.error('회사 목록 로드 실패:', error);
+      // API 실패 시 빈 배열로 설정
+      setCompanies([]);
+    } finally {
+      setIsLoadingCompanies(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCompanies();
+  }, []);
+
+  const quickStats: Array<{ label: string; value: string; icon: string; color: string; delay: string }> = []; // 가짜 통계 데이터 제거됨 - API에서 실제 통계를 가져와야 함
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const quickActions = [
     {
       title: APP_TEXTS.dashboard.actions.chessDuel.title,
       description: APP_TEXTS.dashboard.actions.chessDuel.description,
       piece: '♞',
-      pieceName: APP_TEXTS.dashboard.actions.chessDuel.pieceName,
       color: 'from-red-500 to-red-700',
       action: () => onNavigate('battle'),
       href: '/battle',
@@ -30,7 +48,6 @@ export function Dashboard({ onNavigate }: DashboardProps) {
       title: APP_TEXTS.dashboard.actions.knowledgeExploration.title,
       description: APP_TEXTS.dashboard.actions.knowledgeExploration.description,
       piece: '♗',
-      pieceName: APP_TEXTS.dashboard.actions.knowledgeExploration.pieceName,
       color: 'from-blue-500 to-blue-700',
       action: () => onNavigate('search'),
       href: '/search',
@@ -40,7 +57,6 @@ export function Dashboard({ onNavigate }: DashboardProps) {
       title: APP_TEXTS.dashboard.actions.soloTraining.title,
       description: APP_TEXTS.dashboard.actions.soloTraining.description,
       piece: '♖',
-      pieceName: APP_TEXTS.dashboard.actions.soloTraining.pieceName,
       color: 'from-emerald-500 to-emerald-700',
       action: () => onNavigate('mock'),
       href: '/mock',
@@ -50,7 +66,6 @@ export function Dashboard({ onNavigate }: DashboardProps) {
       title: APP_TEXTS.dashboard.actions.hallOfFame.title,
       description: APP_TEXTS.dashboard.actions.hallOfFame.description,
       piece: '♕',
-      pieceName: APP_TEXTS.dashboard.actions.hallOfFame.pieceName,
       color: 'from-amber-500 to-amber-700',
       action: () => onNavigate('rankings'),
       href: '/rankings',
@@ -58,11 +73,7 @@ export function Dashboard({ onNavigate }: DashboardProps) {
     }
   ];
 
-  const recentActivities = [
-    { type: APP_TEXTS.dashboard.recentGames.battleVictory, opponent: APP_TEXTS.sampleData.opponents[3].name, time: `2${APP_TEXTS.dashboard.recentGames.hoursAgo}`, score: '+15 점' },
-    { type: APP_TEXTS.dashboard.recentGames.answerRegistration, question: 'React Hook에 대해 설명해주세요', time: `1${APP_TEXTS.dashboard.recentGames.daysAgo}`, likes: `3 ${APP_TEXTS.dashboard.recentGames.likes}` },
-    { type: APP_TEXTS.dashboard.recentGames.questionAdded, question: 'TypeScript의 장점은?', time: `2${APP_TEXTS.dashboard.recentGames.daysAgo}`, status: APP_TEXTS.dashboard.recentGames.approved },
-  ];
+  const recentActivities: Array<{ type: string; opponent?: string; time: string; score?: string; question?: string; likes?: string; status?: string }> = []; // 가짜 최근 경기 데이터 제거됨 - API에서 실제 활동을 가져와야 함
 
   return (
     <div className="container mx-auto px-4 py-8 space-y-8">
@@ -84,8 +95,14 @@ export function Dashboard({ onNavigate }: DashboardProps) {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {recentActivities.map((activity, index) => (
+            {recentActivities.length === 0 ? (
+              <div className="text-center py-12">
+                <div className="text-slate-500 mb-4">아직 활동 기록이 없습니다.</div>
+                <div className="text-sm text-slate-400">첫 번째 면접 배틀을 시작해보세요!</div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {recentActivities.map((activity, index) => (
                 <div 
                   key={index} 
                   className="flex items-start space-x-3 p-4 rounded-lg bg-slate-50 border border-slate-100 hover:bg-blue-50 hover:border-blue-200 transition-all duration-300 cursor-pointer interactive-scale group animate-slide-in-right"
@@ -117,8 +134,9 @@ export function Dashboard({ onNavigate }: DashboardProps) {
                     <ChevronRight className="w-4 h-4 text-blue-500" />
                   </div>
                 </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -133,49 +151,58 @@ export function Dashboard({ onNavigate }: DashboardProps) {
               {APP_TEXTS.dashboard.masteryProgress.subtitle}
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="group cursor-pointer hover:bg-blue-50 p-2 rounded-lg transition-colors">
-              <div className="flex justify-between text-sm mb-2">
-                <span className="text-slate-600 group-hover:text-slate-700 transition-colors">{APP_TEXTS.dashboard.masteryProgress.dailyTraining} (5수)</span>
-                <span className="font-medium text-slate-800 group-hover:text-blue-600 transition-colors">3/5</span>
-              </div>
-              <div className="bg-slate-200 rounded-full h-2 overflow-hidden">
-                <div className="bg-gradient-to-r from-blue-500 to-purple-600 h-2 rounded-full w-3/5 transition-all duration-1000 group-hover:shadow-lg group-hover:shadow-blue-500/30" />
-              </div>
+          <CardContent>
+            <div className="text-center py-12">
+              <div className="text-slate-500 mb-4">아직 진행도 데이터가 없습니다.</div>
+              <div className="text-sm text-slate-400">면접 배틀을 통해 진행도를 쌓아보세요!</div>
             </div>
-            
-            <div className="group cursor-pointer hover:bg-blue-50 p-2 rounded-lg transition-colors">
-              <div className="flex justify-between text-sm mb-2">
-                <span className="text-slate-600 group-hover:text-slate-700 transition-colors">{APP_TEXTS.dashboard.masteryProgress.weeklyChallenge} (30수)</span>
-                <span className="font-medium text-slate-800 group-hover:text-blue-600 transition-colors">18/30</span>
-              </div>
-              <div className="bg-slate-200 rounded-full h-2 overflow-hidden">
-                <div className="bg-gradient-to-r from-blue-500 to-purple-600 h-2 rounded-full w-3/5 transition-all duration-1000 group-hover:shadow-lg group-hover:shadow-blue-500/30" />
-              </div>
-            </div>
+          </CardContent>
+        </Card>
 
-            <div className="pt-4 border-t border-slate-200 group cursor-pointer hover:bg-blue-50 p-3 rounded-lg transition-colors">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium text-slate-800 group-hover:text-blue-600 transition-colors">{APP_TEXTS.dashboard.masteryProgress.consecutivePlay}</p>
-                  <p className="text-sm text-blue-500 group-hover:text-blue-600 transition-colors animate-pulse">7일째 {APP_TEXTS.dashboard.masteryProgress.consecutiveWinning}</p>
-                </div>
-                <div className="text-2xl animate-chess-hover interactive-glow group-hover:scale-125 transition-transform duration-300">♔</div>
+        {/* Company List */}
+        <Card className="bg-white border border-slate-200 shadow-lg hover:border-blue-300 transition-all duration-500 animate-slide-in-left">
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2 text-slate-800">
+              <Building2 className="w-5 h-5 text-blue-500" />
+              <span>주요 회사</span>
+            </CardTitle>
+            <CardDescription className="text-slate-600">
+              면접 질문이 있는 주요 회사들입니다
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {isLoadingCompanies ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
+                <span className="ml-2 text-slate-600">회사 목록을 불러오는 중...</span>
               </div>
-            </div>
-
-            {/* Achievement badges */}
-            <div className="pt-4 border-t border-slate-200">
-              <p className="text-sm text-slate-600 mb-3">{APP_TEXTS.dashboard.masteryProgress.recentAchievements}</p>
-              <div className="flex space-x-2">
-                <div className="px-3 py-1 bg-blue-100 border border-blue-200 rounded-full text-xs text-blue-700 animate-scale-in cursor-pointer hover:bg-blue-200 transition-colors">
-                  🏆 {APP_TEXTS.dashboard.masteryProgress.winningStreak}
-                </div>
-                <div className="px-3 py-1 bg-purple-100 border border-purple-200 rounded-full text-xs text-purple-700 animate-scale-in cursor-pointer hover:bg-purple-200 transition-colors" style={{animationDelay: '0.2s'}}>
-                  ⚡ {APP_TEXTS.dashboard.masteryProgress.quickVictory}
-                </div>
+            ) : companies.length === 0 ? (
+              <div className="text-center py-8">
+                <div className="text-slate-500 mb-2">아직 회사 데이터가 없습니다.</div>
+                <div className="text-sm text-slate-400">곧 다양한 회사의 면접 질문을 만나보세요!</div>
               </div>
-            </div>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                {companies.map((company) => (
+                  <div
+                    key={company.id}
+                    className="flex items-center space-x-3 p-3 rounded-lg hover:bg-blue-50 transition-colors cursor-pointer group"
+                    onClick={() => onNavigate('search')}
+                  >
+                    <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-sm font-bold group-hover:scale-110 transition-transform">
+                      {company.name[0]}
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-medium text-slate-800 group-hover:text-blue-600 transition-colors">
+                        {company.name}
+                      </p>
+                      <p className="text-xs text-slate-500">면접 질문</p>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-blue-500 transition-colors" />
+                  </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

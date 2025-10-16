@@ -37,6 +37,7 @@
     "@radix-ui/react-tooltip": "^1.1.8",
     "@types/chess.js": "^0.13.7",
     "@types/styled-components": "^5.1.34",
+    "axios": "^1.12.2",
     "chess.js": "^1.4.0",
     "chessboardjsx": "^2.4.7",
     "class-variance-authority": "^0.7.1",

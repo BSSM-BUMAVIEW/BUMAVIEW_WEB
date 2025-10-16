@@ -17,15 +17,15 @@ export const ChessPatternOverlay = styled.div`
   background-size: 60px 60px;
 `;
 
-export const Particle = styled.div<{ x: number; y: number }>`
+export const Particle = styled.div<{ $x: number; $y: number }>`
   position: absolute;
   width: 1rem;
   height: 1rem;
   color: rgba(148, 163, 184, 0.2);
   pointer-events: none;
   animation: float 3s ease-in-out infinite;
-  left: ${props => props.x}%;
-  top: ${props => props.y}%;
+  left: ${props => props.$x}%;
+  top: ${props => props.$y}%;
 `;
 
 export const GradientOverlay = styled.div`
@@ -42,24 +42,24 @@ export const GradientOverlay = styled.div`
 `;
 
 export const AmbientOrb = styled.div<{ 
-  top?: string; 
-  left?: string; 
-  bottom?: string; 
-  right?: string; 
-  size: string;
-  color: string;
-  delay?: string;
+  $top?: string; 
+  $left?: string; 
+  $bottom?: string; 
+  $right?: string; 
+  $size: string;
+  $color: string;
+  $delay?: string;
 }>`
   position: absolute;
-  width: ${props => props.size};
-  height: ${props => props.size};
-  background: ${props => props.color};
+  width: ${props => props.$size};
+  height: ${props => props.$size};
+  background: ${props => props.$color};
   border-radius: 50%;
   filter: blur(2rem);
   animation: float 3s ease-in-out infinite;
-  animation-delay: ${props => props.delay || '0s'};
-  top: ${props => props.top || 'auto'};
-  left: ${props => props.left || 'auto'};
-  bottom: ${props => props.bottom || 'auto'};
-  right: ${props => props.right || 'auto'};
+  animation-delay: ${props => props.$delay || '0s'};
+  top: ${props => props.$top || 'auto'};
+  left: ${props => props.$left || 'auto'};
+  bottom: ${props => props.$bottom || 'auto'};
+  right: ${props => props.$right || 'auto'};
 `;

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
@@ -18,127 +18,90 @@ import {
   Swords,
   Target,
   Calendar,
-  Award
+  Award,
+  Loader2
 } from 'lucide-react';
+import { apiClient, Answer } from '../lib/api';
+
+interface UserRanking {
+  rank: number;
+  name: string;
+  avatar: string;
+  totalLikes: number;
+  totalAnswers: number;
+  avgLikes: number;
+  badge: string;
+  school: string;
+  tier: string;
+}
 
 export function Rankings() {
   const [selectedPeriod, setSelectedPeriod] = useState('전체');
+  const [answerRankings, setAnswerRankings] = useState<UserRanking[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const answerRankings = [
-    {
-      rank: 1,
-      name: "서정현",
-      avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=1",
-      totalLikes: 1247,
-      totalAnswers: 89,
-      avgLikes: 14.0,
-      badge: "Expert",
-      school: "부산소프트웨어마이스터고",
-      tier: "Diamond"
-    },
-    {
-      rank: 2,
-      name: "박동현",
-      avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=2",
-      totalLikes: 986,
-      totalAnswers: 67,
-      avgLikes: 14.7,
-      badge: "Master",
-      school: "부산소프트웨어마이스터고",
-      tier: "Platinum"
-    },
-    {
-      rank: 3,
-      name: "김한결",
-      avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=3",
-      totalLikes: 834,
-      totalAnswers: 52,
-      avgLikes: 16.0,
-      badge: "Pro",
-      school: "부산소프트웨어마이스터고",
-      tier: "Gold"
-    },
-    {
-      rank: 4,
-      name: "권민재",
-      avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=4",
-      totalLikes: 756,
-      totalAnswers: 48,
-      avgLikes: 15.8,
-      badge: "Advanced",
-      school: "부산소프트웨어마이스터고",
-      tier: "Gold"
-    },
-    {
-      rank: 5,
-      name: "허세진",
-      avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=5",
-      totalLikes: 689,
-      totalAnswers: 43,
-      avgLikes: 16.0,
-      badge: "Skilled",
-      school: "부산소프트웨어마이스터고",
-      tier: "Silver"
-    }
-  ];
+  // API에서 답변 데이터 가져오기
+  const fetchAnswerRankings = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      // 좋아요 순으로 답변 조회
+      const answers = await apiClient.getAnswersByLikes();
+      
+      // 답변 데이터를 랭킹 형식으로 변환
+      const rankings: UserRanking[] = answers.map((answer, index) => ({
+        rank: index + 1,
+        name: `사용자 ${answer.id}`, // 실제로는 사용자 이름이 필요
+        avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${answer.id}`,
+        totalLikes: answer.likes,
+        totalAnswers: 1, // 개별 답변이므로 1
+        avgLikes: answer.likes,
+        badge: getBadgeByLikes(answer.likes),
+        school: "API 사용자", // 하드코딩된 학교명 제거
+        tier: getTierByLikes(answer.likes)
+      }));
 
-  const battleRankings = [
-    {
-      rank: 1,
-      name: "서정현",
-      avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=6",
-      rating: 2187,
-      wins: 47,
-      losses: 8,
-      winRate: 85.5,
-      streak: 12,
-      tier: "Grandmaster"
-    },
-    {
-      rank: 2,
-      name: "박동현",
-      avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=7",
-      rating: 1943,
-      wins: 39,
-      losses: 12,
-      winRate: 76.5,
-      streak: 5,
-      tier: "Master"
-    },
-    {
-      rank: 3,
-      name: "오주현",
-      avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=8",
-      rating: 1756,
-      wins: 34,
-      losses: 16,
-      winRate: 68.0,
-      streak: 3,
-      tier: "Diamond"
-    },
-    {
-      rank: 4,
-      name: "김현우",
-      avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=9",
-      rating: 1624,
-      wins: 28,
-      losses: 15,
-      winRate: 65.1,
-      streak: 1,
-      tier: "Platinum"
-    },
-    {
-      rank: 5,
-      name: "공덕현",
-      avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=10",
-      rating: 1487,
-      wins: 23,
-      losses: 19,
-      winRate: 54.8,
-      streak: 0,
-      tier: "Gold"
+      setAnswerRankings(rankings);
+    } catch (error) {
+      console.error('답변 랭킹 로드 실패:', error);
+      setError('랭킹 데이터를 불러오는데 실패했습니다.');
+      
+      // API 실패 시 빈 배열로 설정
+      setAnswerRankings([]);
+    } finally {
+      setIsLoading(false);
     }
-  ];
+  };
+
+  // 좋아요 수에 따른 배지 결정
+  const getBadgeByLikes = (likes: number): string => {
+    if (likes >= 1000) return "Expert";
+    if (likes >= 800) return "Master";
+    if (likes >= 600) return "Pro";
+    if (likes >= 400) return "Advanced";
+    if (likes >= 200) return "Intermediate";
+    return "Beginner";
+  };
+
+  // 좋아요 수에 따른 티어 결정
+  const getTierByLikes = (likes: number): string => {
+    if (likes >= 1000) return "Diamond";
+    if (likes >= 800) return "Platinum";
+    if (likes >= 600) return "Gold";
+    if (likes >= 400) return "Silver";
+    return "Bronze";
+  };
+
+
+  // 강제로 비워둔 상태 유지
+  useEffect(() => {
+    setIsLoading(false);
+    setAnswerRankings([]);
+  }, []);
+
+  const battleRankings: any[] = []; // 더미 데이터 제거됨 - API에서 실제 배틀 랭킹을 가져와야 함
 
   const getTierColor = (tier: string) => {
     switch (tier) {
@@ -216,53 +179,66 @@ export function Rankings() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex justify-center items-end space-x-8">
-                    {/* 2nd Place */}
-                    <div className="text-center">
-                      <div className="w-20 h-20 mx-auto mb-3 relative">
-                        <Avatar className="w-full h-full border-4 border-slate-300 shadow-lg">
-                          <AvatarImage src={answerRankings[1].avatar} />
-                          <AvatarFallback>{answerRankings[1].name[0]}</AvatarFallback>
-                        </Avatar>
-                        <div className="absolute -top-2 -right-2 w-8 h-8 bg-slate-400 rounded-full flex items-center justify-center shadow-lg">
-                          <span className="text-white font-bold text-sm">2</span>
-                        </div>
-                      </div>
-                      <h3 className="font-bold text-slate-800">{answerRankings[1].name}</h3>
-                      <p className="text-sm text-slate-600">{answerRankings[1].totalLikes} 좋아요</p>
+                  {answerRankings.length === 0 ? (
+                    <div className="text-center py-12">
+                      <div className="text-slate-500 mb-4">아직 답변 데이터가 없습니다.</div>
+                      <div className="text-sm text-slate-400">첫 번째 답변을 작성해보세요!</div>
                     </div>
+                  ) : (
+                    <div className="flex justify-center items-end space-x-8">
+                      {/* 2nd Place */}
+                      {answerRankings[1] && (
+                        <div className="text-center">
+                          <div className="w-20 h-20 mx-auto mb-3 relative">
+                            <Avatar className="w-full h-full border-4 border-slate-300 shadow-lg">
+                              <AvatarImage src={answerRankings[1].avatar} />
+                              <AvatarFallback>{answerRankings[1].name[0]}</AvatarFallback>
+                            </Avatar>
+                            <div className="absolute -top-2 -right-2 w-8 h-8 bg-slate-400 rounded-full flex items-center justify-center shadow-lg">
+                              <span className="text-white font-bold text-sm">2</span>
+                            </div>
+                          </div>
+                          <h3 className="font-bold text-slate-800">{answerRankings[1].name}</h3>
+                          <p className="text-sm text-slate-600">{answerRankings[1].totalLikes} 좋아요</p>
+                        </div>
+                      )}
 
-                    {/* 1st Place */}
-                    <div className="text-center">
-                      <div className="w-24 h-24 mx-auto mb-3 relative">
-                        <Avatar className="w-full h-full border-4 border-blue-400 shadow-lg">
-                          <AvatarImage src={answerRankings[0].avatar} />
-                          <AvatarFallback>{answerRankings[0].name[0]}</AvatarFallback>
-                        </Avatar>
-                        <div className="absolute -top-3 -right-3 w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center shadow-lg">
-                          <Crown className="w-5 h-5 text-white" />
+                      {/* 1st Place */}
+                      {answerRankings[0] && (
+                        <div className="text-center">
+                          <div className="w-24 h-24 mx-auto mb-3 relative">
+                            <Avatar className="w-full h-full border-4 border-blue-400 shadow-lg">
+                              <AvatarImage src={answerRankings[0].avatar} />
+                              <AvatarFallback>{answerRankings[0].name[0]}</AvatarFallback>
+                            </Avatar>
+                            <div className="absolute -top-3 -right-3 w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center shadow-lg">
+                              <Crown className="w-5 h-5 text-white" />
+                            </div>
+                          </div>
+                          <h3 className="font-bold text-lg text-slate-800">{answerRankings[0].name}</h3>
+                          <p className="text-slate-600">{answerRankings[0].totalLikes} 좋아요</p>
+                          <Badge className="mt-1 bg-blue-500 text-white">{answerRankings[0].badge}</Badge>
                         </div>
-                      </div>
-                      <h3 className="font-bold text-lg text-slate-800">{answerRankings[0].name}</h3>
-                      <p className="text-slate-600">{answerRankings[0].totalLikes} 좋아요</p>
-                      <Badge className="mt-1 bg-blue-500 text-white">{answerRankings[0].badge}</Badge>
-                    </div>
+                      )}
 
-                    {/* 3rd Place */}
-                    <div className="text-center">
-                      <div className="w-20 h-20 mx-auto mb-3 relative">
-                        <Avatar className="w-full h-full border-4 border-amber-500 shadow-lg">
-                          <AvatarImage src={answerRankings[2].avatar} />
-                          <AvatarFallback>{answerRankings[2].name[0]}</AvatarFallback>
-                        </Avatar>
-                        <div className="absolute -top-2 -right-2 w-8 h-8 bg-amber-500 rounded-full flex items-center justify-center shadow-lg">
-                          <span className="text-white font-bold text-sm">3</span>
+                      {/* 3rd Place */}
+                      {answerRankings[2] && (
+                        <div className="text-center">
+                          <div className="w-20 h-20 mx-auto mb-3 relative">
+                            <Avatar className="w-full h-full border-4 border-amber-500 shadow-lg">
+                              <AvatarImage src={answerRankings[2].avatar} />
+                              <AvatarFallback>{answerRankings[2].name[0]}</AvatarFallback>
+                            </Avatar>
+                            <div className="absolute -top-2 -right-2 w-8 h-8 bg-amber-500 rounded-full flex items-center justify-center shadow-lg">
+                              <span className="text-white font-bold text-sm">3</span>
+                            </div>
+                          </div>
+                          <h3 className="font-bold text-slate-800">{answerRankings[2].name}</h3>
+                          <p className="text-sm text-slate-600">{answerRankings[2].totalLikes} 좋아요</p>
                         </div>
-                      </div>
-                      <h3 className="font-bold text-slate-800">{answerRankings[2].name}</h3>
-                      <p className="text-sm text-slate-600">{answerRankings[2].totalLikes} 좋아요</p>
+                      )}
                     </div>
-                  </div>
+                  )}
                 </CardContent>
               </Card>
 
@@ -273,55 +249,77 @@ export function Rankings() {
                   <CardDescription className="text-slate-600">좋아요를 많이 받은 답변자 순위입니다</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-4">
-                    {answerRankings.map((user) => (
-                      <div key={user.rank} className="flex items-center space-x-4 p-4 rounded-lg hover:bg-slate-50 transition-colors">
-                        <div className="flex items-center justify-center w-8">
-                          {getRankIcon(user.rank)}
-                        </div>
-                        
-                        <Avatar className="w-12 h-12 shadow-lg">
-                          <AvatarImage src={user.avatar} />
-                          <AvatarFallback>{user.name[0]}</AvatarFallback>
-                        </Avatar>
+                  {isLoading ? (
+                    <div className="flex items-center justify-center py-12">
+                      <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+                      <span className="ml-2 text-slate-600">랭킹 데이터를 불러오는 중...</span>
+                    </div>
+                  ) : error ? (
+                    <div className="text-center py-12">
+                      <div className="text-red-500 mb-4">{error}</div>
+                      <Button onClick={fetchAnswerRankings} variant="outline">
+                        다시 시도
+                      </Button>
+                    </div>
+                  ) : answerRankings.length === 0 ? (
+                    <div className="text-center py-12">
+                      <div className="text-slate-500 mb-4">아직 답변 데이터가 없습니다.</div>
+                      <div className="text-sm text-slate-400 mb-4">첫 번째 답변을 작성해보세요!</div>
+                      <Button onClick={fetchAnswerRankings} variant="outline">
+                        새로고침
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {answerRankings.map((user) => (
+                        <div key={user.rank} className="flex items-center space-x-4 p-4 rounded-lg hover:bg-slate-50 transition-colors">
+                          <div className="flex items-center justify-center w-8">
+                            {getRankIcon(user.rank)}
+                          </div>
+                          
+                          <Avatar className="w-12 h-12 shadow-lg">
+                            <AvatarImage src={user.avatar} />
+                            <AvatarFallback>{user.name[0]}</AvatarFallback>
+                          </Avatar>
 
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-2 mb-1">
-                            <h3 className="font-semibold text-slate-800">{user.name}</h3>
-                            <Badge className={`bg-gradient-to-r ${getTierColor(user.tier)} text-white`}>
-                              {user.tier}
-                            </Badge>
-                            <Badge variant="outline" className="border-slate-300 text-slate-600">{user.badge}</Badge>
+                          <div className="flex-1">
+                            <div className="flex items-center space-x-2 mb-1">
+                              <h3 className="font-semibold text-slate-800">{user.name}</h3>
+                              <Badge className={`bg-gradient-to-r ${getTierColor(user.tier)} text-white`}>
+                                {user.tier}
+                              </Badge>
+                              <Badge variant="outline" className="border-slate-300 text-slate-600">{user.badge}</Badge>
+                            </div>
+                            <p className="text-sm text-slate-600">{user.school}</p>
                           </div>
-                          <p className="text-sm text-slate-600">{user.school}</p>
-                        </div>
 
-                        <div className="flex space-x-6 text-center">
-                          <div>
-                            <div className="flex items-center space-x-1 text-sm">
-                              <Heart className="w-4 h-4 text-red-500" />
-                              <span className="font-bold text-slate-800">{user.totalLikes}</span>
+                          <div className="flex space-x-6 text-center">
+                            <div>
+                              <div className="flex items-center space-x-1 text-sm">
+                                <Heart className="w-4 h-4 text-red-500" />
+                                <span className="font-bold text-slate-800">{user.totalLikes}</span>
+                              </div>
+                              <p className="text-xs text-slate-500">총 좋아요</p>
                             </div>
-                            <p className="text-xs text-slate-500">총 좋아요</p>
-                          </div>
-                          <div>
-                            <div className="flex items-center space-x-1 text-sm">
-                              <MessageSquare className="w-4 h-4 text-blue-500" />
-                              <span className="font-bold text-slate-800">{user.totalAnswers}</span>
+                            <div>
+                              <div className="flex items-center space-x-1 text-sm">
+                                <MessageSquare className="w-4 h-4 text-blue-500" />
+                                <span className="font-bold text-slate-800">{user.totalAnswers}</span>
+                              </div>
+                              <p className="text-xs text-slate-500">답변 수</p>
                             </div>
-                            <p className="text-xs text-slate-500">답변 수</p>
-                          </div>
-                          <div>
-                            <div className="flex items-center space-x-1 text-sm">
-                              <Star className="w-4 h-4 text-yellow-500" />
-                              <span className="font-bold text-slate-800">{user.avgLikes}</span>
+                            <div>
+                              <div className="flex items-center space-x-1 text-sm">
+                                <Star className="w-4 h-4 text-yellow-500" />
+                                <span className="font-bold text-slate-800">{user.avgLikes}</span>
+                              </div>
+                              <p className="text-xs text-slate-500">평균 좋아요</p>
                             </div>
-                            <p className="text-xs text-slate-500">평균 좋아요</p>
                           </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </div>
@@ -361,8 +359,14 @@ export function Rankings() {
                   <CardDescription className="text-slate-600">배틀에서 가장 뛰어난 성과를 보인 사용자들입니다</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-4">
-                    {battleRankings.map((user) => (
+                  {battleRankings.length === 0 ? (
+                    <div className="text-center py-12">
+                      <div className="text-slate-500 mb-4">아직 배틀 데이터가 없습니다.</div>
+                      <div className="text-sm text-slate-400">첫 번째 배틀을 시작해보세요!</div>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {battleRankings.map((user) => (
                       <div key={user.rank} className="flex items-center space-x-4 p-4 rounded-lg hover:bg-slate-50 transition-colors">
                         <div className="flex items-center justify-center w-8">
                           {getRankIcon(user.rank)}
@@ -403,8 +407,9 @@ export function Rankings() {
                           </div>
                         </div>
                       </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </div>

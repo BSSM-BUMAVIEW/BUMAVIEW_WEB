@@ -36,23 +36,19 @@ export const APP_TEXTS = {
       chessDuel: {
         title: '면접 체스',
         description: '실시간 면접 대결로 실력을 겨루세요',
-        pieceName: 'Knight Move',
         activate: ''
       },
       knowledgeExploration: {
         title: '지식 탐색',
-        description: '전략적으로 질문을 분석하고 학습하세요',
-        pieceName: 'Bishop Move'
+        description: '전략적으로 질문을 분석하고 학습하세요'
       },
       soloTraining: {
         title: '모의 면접',
-        description: '집중적인 면접 연습으로 실력을 향상시키세요',
-        pieceName: 'Rook Move'
+        description: '집중적인 면접 연습으로 실력을 향상시키세요'
       },
       hallOfFame: {
         title: '면접 랭킹',
-        description: '면접 랭킹을 확인해보세요',
-        pieceName: 'Queen Move'
+        description: '면접 랭킹을 확인해보세요'
       }
     },
 
@@ -140,8 +136,8 @@ export const APP_TEXTS = {
     defeat: '패배',
     draw: '무승부',
     timeUp: '시간 초과!',
-    timeUpVictory: '시간 초과! 나의 승리!',
-    timeUpDefeat: '시간 초과! 상대의 승리!',
+    timeUpVictory: '시간 초과! 승리!',
+    timeUpDefeat: '시간 초과! 패배!',
     
     aiLevels: {
       beginner: 'Lv. 1',
@@ -192,33 +188,48 @@ export const APP_TEXTS = {
     refresh: '새로고침'
   },
 
-  // 샘플 데이터
-  sampleData: {
-    opponents: [
-      { name: '서정현', avatar: '👨‍💻' },
-      { name: '허세진', avatar: '👩‍💻' },
-      { name: '권민재', avatar: '🧑‍💻' },
-      { name: '오주현', avatar: '👨‍💻' }
-    ],
+  // 질문 검색 및 답변
+  questionSearch: {
+    title: 'Q 지식 탐색',
+    subtitle: '면접 질문과 답변을 탐색하고 학습하세요',
+    searchPlaceholder: '카테고리, 회사명, 키워드로 검색...',
+    filterByCategory: '카테고리별 필터',
+    filterByCompany: '회사별 필터',
+    filterByYear: '연도별 필터',
+    noResults: '검색 결과가 없습니다.',
+    loadMore: '더 보기',
+    resultsCount: '개의 전략을 발견했습니다',
+    
+    // 답변 모달
+    answerModal: {
+      title: '답변 작성',
+      answerLabel: '답변',
+      placeholder: '질문에 대한 답변을 작성해주세요...',
+      shortcut: 'Ctrl + Enter로 빠른 등록',
+      submitButton: '답변 등록'
+    },
 
-    questions: [
-      {
-        text: 'React에서 useEffect의 의존성 배열이 비어있을 때와 의존성이 있을 때의 차이점을 설명해주세요.',
-        category: 'React',
-        difficulty: 'medium' as const
-      },
-      {
-        text: 'JavaScript의 클로저(Closure) 개념과 실제 사용 사례를 설명해주세요.',
-        category: 'JavaScript',
-        difficulty: 'hard' as const
-      },
-      {
-        text: 'TypeScript의 제네릭(Generic)이 무엇이고, 언제 사용하는지 설명해주세요.',
-        category: 'TypeScript',
-        difficulty: 'medium' as const
-      }
-    ]
+    // 질문 등록 모달
+    questionModal: {
+      title: '질문 등록',
+      companyLabel: '회사명',
+      companyPlaceholder: '예: 삼성전자, 네이버, 카카오...',
+      categoryLabel: '카테고리',
+      dateLabel: '면접 날짜',
+      contentLabel: '질문 내용',
+      contentPlaceholder: '면접에서 받은 질문을 자세히 작성해주세요...',
+      contentHint: '구체적인 질문 내용과 상황을 설명해주세요',
+      submitButton: '질문 등록'
+    },
+    
+    // 답변 목록
+    answersList: {
+      title: '다른 사람들의 답변',
+      emptyTitle: '아직 답변이 없습니다',
+      emptyMessage: '첫 번째 답변을 작성해보세요!'
+    }
   }
+
 } as const;
 
 // 타입 정의

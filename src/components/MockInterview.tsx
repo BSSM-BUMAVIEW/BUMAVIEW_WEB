@@ -17,8 +17,10 @@ import {
   BookOpen,
   Brain,
   Lightbulb,
-  TrendingUp
+  TrendingUp,
+  Loader2
 } from 'lucide-react';
+import { apiClient, Question } from '../lib/api';
 
 export function MockInterview() {
   const [interviewState, setInterviewState] = useState<'setup' | 'active' | 'completed'>('setup');
@@ -27,57 +29,101 @@ export function MockInterview() {
   const [isTimerActive, setIsTimerActive] = useState(false);
   const [currentAnswer, setCurrentAnswer] = useState('');
   const [answers, setAnswers] = useState<string[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState('전체');
+  const [selectedCategory, setSelectedCategory] = useState('백엔드');
   const [selectedDifficulty, setSelectedDifficulty] = useState('중급');
   const [questionCount, setQuestionCount] = useState(5);
 
-  const categories = ['전체', '프론트엔드', '백엔드', 'React', 'Node.js', 'Database'];
+  // 선택 가능한 카테고리 (표시는 한글, API 파라미터는 영문 약어)
+  const categories = ['백엔드', '프론트엔드', 'AI', 'DevOps'];
+
+  const mapCategoryForApi = (label: string): string => {
+    const map: Record<string, string> = {
+      '백엔드': 'back',
+      '프론트엔드': 'front',
+      'AI': 'ai',
+      'DevOps': 'devops',
+      'backend': 'back',
+      'frontend': 'front'
+    };
+    return map[label] || label;
+  };
   const difficulties = ['초급', '중급', '고급', '혼합'];
 
-  const mockQuestions = [
-    {
-      id: 1,
-      question: "React의 Virtual DOM이 무엇인지 설명하고, 실제 DOM과의 차이점을 말해주세요.",
-      category: "React",
-      difficulty: "중급",
-      hints: ["성능 최적화", "상태 변화 감지", "배치 업데이트"],
-      timeLimit: 300
-    },
-    {
-      id: 2,
-      question: "JavaScript의 클로저(Closure)에 대해 설명하고 실제 사용 예시를 들어주세요.",
-      category: "프론트엔드",
-      difficulty: "중급",
-      hints: ["스코프 체인", "메모리 관리", "데이터 은닉"],
-      timeLimit: 300
-    },
-    {
-      id: 3,
-      question: "RESTful API 설계 원칙과 HTTP 메서드의 적절한 사용법을 설명해주세요.",
-      category: "백엔드",
-      difficulty: "중급",
-      hints: ["무상태성", "자원 중심", "표준 메서드"],
-      timeLimit: 300
-    },
-    {
-      id: 4,
-      question: "데이터베이스의 트랜잭션과 ACID 속성에 대해 설명해주세요.",
-      category: "Database",
-      difficulty: "고급",
-      hints: ["원자성", "일관성", "격리성", "지속성"],
-      timeLimit: 300
-    },
-    {
-      id: 5,
-      question: "프론트엔드 성능 최적화를 위한 기법들을 설명해주세요.",
-      category: "프론트엔드",
-      difficulty: "고급",
-      hints: ["번들 최적화", "이미지 최적화", "캐싱", "지연 로딩"],
-      timeLimit: 300
-    }
-  ];
+  const [questions, setQuestions] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const currentQuestion = mockQuestions[currentQuestionIndex];
+  // API에서 질문 가져오기
+  const fetchQuestions = async (category: string = '백엔드', count: number = 5) => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      let apiQuestions: Question[] = [];
+      if (category && category !== '전체') {
+        const apiCategory = mapCategoryForApi(category);
+        apiQuestions = await apiClient.getQuestionsByCategory(apiCategory);
+      } else {
+        apiQuestions = await apiClient.getAllQuestions();
+      }
+      
+      // API 질문을 MockInterview 형식으로 변환
+      let source = apiQuestions;
+      // API에서 데이터가 없을 때 안전한 폴백 생성
+      if (!source || source.length === 0) {
+        source = Array.from({ length: count }).map((_, i) => ({
+          id: i + 1,
+          content: '예시 질문입니다. 자기소개를 간단히 해주세요.',
+          category: category || '일반',
+          questionAt: String(new Date().getFullYear())
+        })) as any;
+      }
+
+      const mockQuestions = source.slice(0, count).map((apiQ: any, index: number) => ({
+        id: apiQ.id,
+        question: apiQ.content,
+        category: category || apiQ.category,
+        difficulty: getRandomDifficulty(),
+        hints: getDefaultHints(category || apiQ.category),
+        timeLimit: 300
+      }));
+
+      setQuestions(mockQuestions);
+    } catch (error) {
+      console.error('질문 로드 실패:', error);
+      setError('질문을 불러오는데 실패했습니다. 잠시 후 다시 시도해주세요.');
+      
+      // API 실패 시 빈 배열로 설정
+      setQuestions([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // 랜덤 난이도 생성
+  const getRandomDifficulty = (): string => {
+    const difficulties = ['초급', '중급', '고급'];
+    return difficulties[Math.floor(Math.random() * difficulties.length)];
+  };
+
+  // 카테고리별 기본 힌트 생성
+  const getDefaultHints = (category: string): string[] => {
+    const hintMap: { [key: string]: string[] } = {
+      'frontend': ["기본 개념", "실제 사용 예시", "성능 최적화"],
+      'backend': ["아키텍처 관점", "보안과 성능", "실제 구현 경험"],
+      'react': ["핵심 개념", "Hook과 클래스 컴포넌트", "실제 프로젝트 경험"],
+      'database': ["설계 원칙", "성능과 정규화", "실제 쿼리 예시"]
+    };
+    return hintMap[category] || ["기본 개념", "실제 사용 예시", "개선 방안"];
+  };
+
+
+  // 컴포넌트 마운트 시 질문 로드
+  useEffect(() => {
+    fetchQuestions(selectedCategory);
+  }, [selectedCategory]);
+
+  const currentQuestion = questions[currentQuestionIndex];
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -108,7 +154,11 @@ export function MockInterview() {
     }
   };
 
-  const startInterview = () => {
+  const startInterview = async () => {
+    // 질문이 없으면 먼저 로드
+    if (!questions || questions.length === 0) {
+      await fetchQuestions(selectedCategory, questionCount);
+    }
     setInterviewState('active');
     setCurrentQuestionIndex(0);
     setTimeLeft(300);
@@ -248,7 +298,7 @@ export function MockInterview() {
                   </CardHeader>
                   <CardContent className="max-h-96 overflow-y-auto">
                     <div className="space-y-4">
-                      {mockQuestions.slice(0, questionCount).map((question, index) => (
+                      {questions.slice(0, questionCount).map((question, index) => (
                         <Card key={question.id} className="bg-slate-50 border border-slate-200">
                           <CardContent className="p-4">
                             <div className="flex items-start justify-between mb-3">
@@ -417,11 +467,11 @@ export function MockInterview() {
                     </div>
                   </div>
                   <div className="flex space-x-3">
-                    <Badge className={getDifficultyColor(currentQuestion.difficulty)}>
-                      {currentQuestion.difficulty}
+                    <Badge className={getDifficultyColor(currentQuestion?.difficulty || 'medium')}>
+                      {currentQuestion?.difficulty || '중급'}
                     </Badge>
                     <Badge className="bg-slate-100 text-slate-700 border-slate-200">
-                      {currentQuestion.category}
+                      {currentQuestion?.category || '일반'}
                     </Badge>
                   </div>
                 </div>
@@ -429,7 +479,7 @@ export function MockInterview() {
               <CardContent>
                 <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-6 rounded-xl border border-blue-100 mb-6">
                   <p className="text-xl leading-relaxed text-slate-800 font-medium">
-                    {currentQuestion.question}
+                    {currentQuestion?.question || '질문을 불러오는 중...'}
                   </p>
                 </div>
                 
@@ -442,7 +492,7 @@ export function MockInterview() {
                     전략적 힌트
                   </h4>
                   <div className="flex flex-wrap gap-3">
-                    {currentQuestion.hints.map((hint, index) => (
+                    {(currentQuestion?.hints || []).map((hint: string, index: number) => (
                       <span 
                         key={index}
                         className="px-4 py-2 bg-amber-100 border border-amber-200 text-amber-700 text-sm rounded-full"

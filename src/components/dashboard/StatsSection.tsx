@@ -5,7 +5,6 @@ interface Stat {
   label: string;
   value: string;
   icon: string;
-  piece: string;
   color: string;
   delay: string;
 }
@@ -15,6 +14,17 @@ interface StatsSectionProps {
 }
 
 export const StatsSection: React.FC<StatsSectionProps> = ({ stats }) => {
+  if (stats.length === 0) {
+    return (
+      <section>
+        <div className="text-center py-12">
+          <div className="text-slate-500 mb-4">아직 통계 데이터가 없습니다.</div>
+          <div className="text-sm text-slate-400">면접 배틀을 통해 통계를 쌓아보세요!</div>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
       {stats.map((stat, index) => (
@@ -28,7 +38,6 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ stats }) => {
               <div className="space-y-1">
                 <p className="text-sm text-slate-500 mb-1 group-hover:text-slate-600 transition-colors">{stat.label}</p>
                 <p className="text-2xl font-bold text-slate-800 group-hover:text-blue-600 transition-colors animate-typewriter">{stat.value}</p>
-                <p className="text-xs text-blue-500 mt-1 group-hover:text-blue-600 transition-colors">{stat.piece}</p>
               </div>
               <div className={`w-16 h-16 rounded-full bg-gradient-to-br ${stat.color} flex items-center justify-center shadow-lg border-2 border-white group-hover:scale-110 group-hover:rotate-12 transition-all duration-300 interactive-glow`}>
                 <span className="text-white text-2xl animate-chess-hover">{stat.icon}</span>

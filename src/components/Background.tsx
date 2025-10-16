@@ -19,8 +19,8 @@ export const Background: React.FC = () => {
       {particles.map((particle) => (
         <Particle
           key={particle.id}
-          x={particle.x}
-          y={particle.y}
+          $x={particle.x}
+          $y={particle.y}
         >
           {CHESS_PIECES[particle.id % CHESS_PIECES.length]}
         </Particle>
@@ -29,17 +29,17 @@ export const Background: React.FC = () => {
       <GradientOverlay />
 
       <AmbientOrb
-        top="5rem"
-        left="2.5rem"
-        size="6rem"
-        color="rgba(59, 130, 246, 0.1)"
+        $top="5rem"
+        $left="2.5rem"
+        $size="6rem"
+        $color="rgba(59, 130, 246, 0.1)"
       />
       <AmbientOrb
-        bottom="5rem"
-        right="5rem"
-        size="8rem"
-        color="rgba(139, 92, 246, 0.1)"
-        delay="2s"
+        $bottom="5rem"
+        $right="5rem"
+        $size="8rem"
+        $color="rgba(139, 92, 246, 0.1)"
+        $delay="2s"
       />
     </BackgroundContainer>
   );
